@@ -6,6 +6,7 @@ import {
   SettingsIcon,
 } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 
 type OwnerShellProps = {
   children: React.ReactNode
@@ -194,17 +195,21 @@ export function PosterPlaceholder({
   variant = "a",
   compact = false,
   className = "",
+  imageSrc,
+  imageAlt,
 }: {
   label: string
   variant?: "a" | "b"
   compact?: boolean
   className?: string
+  imageSrc?: string
+  imageAlt?: string
 }) {
   return (
     <div
       role="img"
       aria-label={`${label} 포스터 미리보기`}
-      className={`flex items-center justify-center overflow-hidden rounded-xl border border-[#3b3b40] text-center text-sm text-[#adadb8] ${
+      className={`relative flex items-center justify-center overflow-hidden rounded-xl border border-[#3b3b40] text-center text-sm text-[#adadb8] ${
         compact ? "h-[78px] w-[84px]" : "h-[196px] w-full"
       } ${
         variant === "a"
@@ -212,7 +217,17 @@ export function PosterPlaceholder({
           : "bg-[linear-gradient(145deg,#3b302d,#292426)]"
       } ${className}`}
     >
-      <span>{label}</span>
+      {imageSrc ? (
+        <Image
+          src={imageSrc}
+          alt={imageAlt ?? label}
+          fill
+          sizes={compact ? "84px" : "(min-width: 768px) 360px, 50vw"}
+          className="object-cover"
+        />
+      ) : (
+        <span>{label}</span>
+      )}
     </div>
   )
 }

@@ -16,6 +16,13 @@ export const activeTest = {
   totalPrice: 30000,
 }
 
+export const posterAssets = {
+  a: "/posters/strawberry-a.png",
+  b: "/posters/strawberry-b.png",
+  resultA: "/posters/strawberry-a-result.jpg",
+  resultB: "/posters/strawberry-b-result.png",
+}
+
 export const completedTest = {
   id: "summer-menu",
   title: "여름 시즌 메뉴 홍보 포스터",

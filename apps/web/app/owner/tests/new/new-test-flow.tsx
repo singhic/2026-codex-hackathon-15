@@ -5,15 +5,18 @@ import {
   ArrowRightIcon,
   CheckIcon,
   ChevronDownIcon,
-  ImagePlusIcon,
   InfoIcon,
-  UploadIcon,
 } from "lucide-react"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 
 import { Button } from "@workspace/ui/components/button"
 
-import { activeTest, votePackages } from "../../_components/mock-data"
+import {
+  activeTest,
+  posterAssets,
+  votePackages,
+} from "../../_components/mock-data"
 import { OwnerShell } from "../../_components/owner-ui"
 
 type NewTestFlowProps = {
@@ -118,11 +121,15 @@ function PosterUploadCard({
   label,
   fileName,
   inputId,
+  imageSrc,
+  highlighted = false,
   onChange,
 }: {
   label: string
   fileName: string
   inputId: string
+  imageSrc: string
+  highlighted?: boolean
   onChange: (fileName: string) => void
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
@@ -131,25 +138,26 @@ function PosterUploadCard({
     <div className="min-w-0 flex-1">
       <button
         type="button"
-        className="group relative flex h-[230px] w-full flex-col items-center justify-center overflow-hidden rounded-xl border border-[#3b3b40] bg-[#29292e] text-sm text-[#adadb8] transition-colors hover:border-[#0a85ff] md:h-[300px]"
+        className={`group relative flex h-[230px] w-full flex-col items-center justify-center overflow-hidden rounded-xl border bg-[#29292e] text-sm text-[#adadb8] transition-colors hover:border-[#0a85ff] md:h-[300px] ${
+          highlighted ? "border-[#ff5a36]" : "border-[#3b3b40]"
+        }`}
         onClick={() => inputRef.current?.click()}
       >
+        <Image
+          src={imageSrc}
+          alt={`포스터 ${label}`}
+          fill
+          sizes="(min-width: 768px) 360px, 50vw"
+          className="object-cover"
+        />
+        <span className="absolute inset-x-4 bottom-3 rounded-xl bg-[#1c1c1e]/95 px-3 py-2 text-center text-xs font-semibold text-[#adadb8]">
+          이미지 교체
+        </span>
         {fileName ? (
-          <>
-            <ImagePlusIcon
-              className="size-7 text-[#0091ff]"
-              aria-hidden="true"
-            />
-            <span className="mt-3 max-w-[130px] truncate text-xs text-white">
-              {fileName}
-            </span>
-          </>
-        ) : (
-          <>
-            <UploadIcon className="size-6" aria-hidden="true" />
-            <span className="mt-3">포스터 {label}</span>
-          </>
-        )}
+          <span className="absolute top-3 right-3 max-w-[calc(100%-24px)] truncate rounded-full bg-black/70 px-2 py-1 text-[10px] text-white">
+            {fileName}
+          </span>
+        ) : null}
       </button>
       <input
         ref={inputRef}
@@ -215,12 +223,15 @@ function PosterStep({
           label="A"
           fileName={fileNames[0]}
           inputId="poster-a"
+          imageSrc={posterAssets.a}
+          highlighted
           onChange={(value) => onFileChange(0, value)}
         />
         <PosterUploadCard
           label="B"
           fileName={fileNames[1]}
           inputId="poster-b"
+          imageSrc={posterAssets.b}
           onChange={(value) => onFileChange(1, value)}
         />
       </div>

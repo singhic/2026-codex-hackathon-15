@@ -1,7 +1,7 @@
 import { ArrowRightIcon, PencilIcon } from "lucide-react"
 import Link from "next/link"
 
-import { activeTest } from "../../_components/mock-data"
+import { activeTest, posterAssets } from "../../_components/mock-data"
 import {
   MetricCard,
   OwnerShell,
@@ -60,10 +60,15 @@ export default async function OwnerTestPage({ params }: TestPageProps) {
         <div className="mt-12 md:max-w-none">
           <p className="text-[15px] font-semibold">테스트 포스터</p>
           <div className="mt-3 grid grid-cols-2 gap-5">
-            <PosterPlaceholder label="포스터 A" className="md:h-[280px]" />
+            <PosterPlaceholder
+              label="포스터 A"
+              imageSrc={posterAssets.a}
+              className="md:h-[280px]"
+            />
             <PosterPlaceholder
               label="포스터 B"
               variant="b"
+              imageSrc={posterAssets.b}
               className="md:h-[280px]"
             />
           </div>
