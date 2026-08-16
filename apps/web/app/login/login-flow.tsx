@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import {
   ArrowRightIcon,
   CheckIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   MapPinIcon,
+  SearchIcon,
   StoreIcon,
   UserRoundIcon,
 } from "lucide-react"
@@ -49,6 +50,14 @@ const requiredTerms = [
 
 const optionalTerm = "마케팅 정보 수신 동의"
 const interestOptions = ["카페", "맛집", "뷰티", "쇼핑", "운동", "문화"]
+const neighborhoodOptions = [
+  "서울 성동구 성수동",
+  "서울 성동구 서울숲",
+  "서울 광진구 건대입구",
+  "서울 마포구 연남동",
+  "서울 강남구 역삼동",
+  "서울 용산구 한남동",
+]
 
 const baseInputClass =
   "h-12 w-full rounded-[14px] border border-[#3d3d42] bg-[#26262b] px-4 text-[15px] text-white outline-none placeholder:text-[#adadb8] focus:border-[#0a85ff] focus:ring-1 focus:ring-[#0a85ff]"
@@ -433,6 +442,24 @@ function GuestInfoStep({
   onBack: () => void
   onNext: () => void
 }) {
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState(info.location)
+  const filteredLocations = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase()
+
+    if (!query) return neighborhoodOptions
+
+    return neighborhoodOptions.filter((location) =>
+      location.toLowerCase().includes(query)
+    )
+  }, [searchQuery])
+
+  function selectLocation(location: string) {
+    setSearchQuery(location)
+    setIsSearchOpen(false)
+    onChange("location", location)
+  }
+
   return (
     <PageShell onBack={onBack} title="관심 있는 동네를 알려주세요">
       <form
@@ -446,30 +473,92 @@ function GuestInfoStep({
           내 생활권 가게의 투표를 먼저 보여드릴게요.
         </p>
         <p className="mt-9 text-sm font-semibold">활동 지역</p>
-        <button
-          type="button"
-          className="mt-2 flex h-12 items-center justify-between rounded-[14px] border border-[#0a85ff] bg-[#26262b] px-4 text-left text-[15px] font-semibold"
-          onClick={() => onChange("location", "현재 위치 사용")}
-        >
-          <span className="flex items-center gap-2">
-            <MapPinIcon className="size-4" aria-hidden="true" />
-            {info.location || "현재 위치 사용"}
-          </span>
-          {info.location ? (
-            <CheckIcon className="size-5" aria-hidden="true" />
-          ) : null}
-        </button>
-        <button
-          type="button"
-          className="mt-2 flex h-12 items-center gap-2 rounded-[14px] border border-[#3d3d42] bg-[#26262b] px-4 text-left text-[15px] text-[#adadb8]"
-          onClick={() => onChange("location", "서울 성동구 성수동")}
-        >
-          직접 동네 검색
-          <ChevronRightIcon className="ml-auto size-4" aria-hidden="true" />
-        </button>
+        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+          <button
+            type="button"
+            className={`flex h-12 items-center justify-between rounded-[14px] border bg-[#26262b] px-4 text-left text-[15px] font-semibold transition-colors sm:min-w-0 ${
+              info.location === "서울 성동구 성수동"
+                ? "border-[#0a85ff]"
+                : "border-[#3d3d42] hover:border-[#0a85ff]"
+            }`}
+            aria-pressed={info.location === "서울 성동구 성수동"}
+            onClick={() => selectLocation("서울 성동구 성수동")}
+          >
+            <span className="flex min-w-0 items-center gap-2">
+              <MapPinIcon className="size-4 shrink-0" aria-hidden="true" />
+              <span className="truncate">현재 위치 사용</span>
+            </span>
+            {info.location === "서울 성동구 성수동" ? (
+              <CheckIcon className="size-5 shrink-0" aria-hidden="true" />
+            ) : null}
+          </button>
+          <button
+            type="button"
+            className={`flex h-12 items-center gap-2 rounded-[14px] border bg-[#26262b] px-4 text-left text-[15px] transition-colors ${
+              isSearchOpen
+                ? "border-[#0a85ff] text-white"
+                : "border-[#3d3d42] text-[#adadb8] hover:border-[#0a85ff]"
+            }`}
+            aria-expanded={isSearchOpen}
+            onClick={() => setIsSearchOpen((current) => !current)}
+          >
+            직접 동네 검색
+            <SearchIcon className="ml-auto size-4" aria-hidden="true" />
+          </button>
+        </div>
+
+        {isSearchOpen ? (
+          <div className="mt-2 rounded-[14px] border border-[#3d3d42] bg-[#1c1c1f] p-2">
+            <div className="relative">
+              <SearchIcon
+                className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#adadb8]"
+                aria-hidden="true"
+              />
+              <input
+                autoFocus
+                type="search"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="동네 이름을 검색해 주세요"
+                className={`${baseInputClass} h-11 pl-10`}
+                aria-label="동네 검색"
+              />
+            </div>
+            <div className="mt-2 max-h-44 overflow-y-auto" role="listbox">
+              {filteredLocations.length > 0 ? (
+                filteredLocations.map((location) => (
+                  <button
+                    key={location}
+                    type="button"
+                    role="option"
+                    aria-selected={info.location === location}
+                    className="flex min-h-10 w-full items-center rounded-lg px-3 text-left text-sm text-[#adadb8] transition-colors hover:bg-[#26262b] hover:text-white"
+                    onClick={() => selectLocation(location)}
+                  >
+                    <MapPinIcon
+                      className="mr-2 size-4 shrink-0"
+                      aria-hidden="true"
+                    />
+                    <span className="truncate">{location}</span>
+                    {info.location === location ? (
+                      <CheckIcon
+                        className="ml-auto size-4 shrink-0 text-[#0a85ff]"
+                        aria-hidden="true"
+                      />
+                    ) : null}
+                  </button>
+                ))
+              ) : (
+                <p className="px-3 py-3 text-sm text-[#adadb8]">
+                  검색 결과가 없습니다.
+                </p>
+              )}
+            </div>
+          </div>
+        ) : null}
 
         <p className="mt-7 text-sm font-semibold">관심 업종. 복수 선택</p>
-        <div className="mt-3 grid grid-cols-4 gap-2">
+        <div className="mt-3 grid grid-cols-2 gap-2 min-[360px]:grid-cols-3 sm:grid-cols-4">
           {interestOptions.map((interest) => {
             const selected = info.interests.includes(interest)
 
