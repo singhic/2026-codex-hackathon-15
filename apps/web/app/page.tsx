@@ -18,8 +18,10 @@ export default function Page() {
               <Layers3Icon className="size-5" aria-hidden="true" />
             </div>
             <div>
-              <p className="text-sm font-semibold">15 FE</p>
-              <p className="text-xs text-muted-foreground">Team boilerplate</p>
+              <p className="text-sm font-semibold">15 Fullstack</p>
+              <p className="text-xs text-muted-foreground">
+                Next.js + Supabase
+              </p>
             </div>
           </div>
           <ModeToggle />
@@ -40,20 +42,21 @@ export default function Page() {
                   id="ready-title"
                   className="text-2xl font-semibold tracking-tight sm:text-3xl"
                 >
-                  15 FE Boilerplate
+                  15 Fullstack Boilerplate
                 </h1>
                 <CardDescription className="max-w-xl leading-relaxed">
-                  Next.js App Router와 Tailwind CSS, 공유 shadcn/ui 패키지를
-                  기반으로 팀 개발을 시작할 수 있습니다.
+                  Next.js Route Handler와 Supabase, Tailwind CSS, 공유 shadcn/ui
+                  패키지를 기반으로 프론트엔드와 서버 개발을 함께 시작할 수
+                  있습니다.
                 </CardDescription>
               </div>
             </CardHeader>
             <CardContent className="space-y-6 pt-1">
               <ul className="grid gap-3 sm:grid-cols-3" aria-label="구성 상태">
                 {[
-                  ["Next.js", "App Router"],
-                  ["Tailwind CSS", "Version 4"],
-                  ["shadcn/ui", "Shared package"],
+                  ["Next.js", "App Router + API"],
+                  ["Supabase", "Database + Auth"],
+                  ["shadcn/ui", "Shared UI"],
                 ].map(([name, detail]) => (
                   <li
                     key={name}
