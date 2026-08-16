@@ -4,6 +4,8 @@ import {
   FileTextIcon,
   HomeIcon,
   SettingsIcon,
+  BadgeCheckIcon,
+  TestTubesIcon,
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
@@ -91,16 +93,16 @@ export function OwnerShell({
               <MobileNavLink
                 href="/owner/dashboard"
                 active={activeTab === "dashboard"}
-                icon={<HomeIcon className="size-4" aria-hidden="true" />}
+                icon={<TestTubesIcon className="size-5" aria-hidden="true" />}
               >
-                진행 중
+                테스트
               </MobileNavLink>
               <MobileNavLink
                 href="/owner/tests"
                 active={activeTab === "tests"}
-                icon={<FileTextIcon className="size-4" aria-hidden="true" />}
+                icon={<BadgeCheckIcon className="size-5" aria-hidden="true" />}
               >
-                완료 리포트
+                픽
               </MobileNavLink>
             </nav>
           ) : null}
