@@ -5,4 +5,6 @@ node_modules/
 coverage/
 pnpm-lock.yaml
 .pnpm-store/
+supabase/.branches/
+supabase/.temp/
 .env*
