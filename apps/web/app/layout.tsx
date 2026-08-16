@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   title: "15 Fullstack | A/B Test Studio",
   description: "고객 투표로 더 효과적인 홍보 포스터를 선택하세요.",
   icons: {
-    icon: "/icon.svg",
+    icon: "/favicon.ico",
   },
 }
 

@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
-  <title>THE PICK</title>
-  <circle cx="32" cy="32" r="30" fill="#0a85ff"/>
-  <circle cx="23" cy="23" r="6" fill="#101014"/>
-  <path d="M25 36.5 31 42l12-15" fill="none" stroke="#101014" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
-</svg>
