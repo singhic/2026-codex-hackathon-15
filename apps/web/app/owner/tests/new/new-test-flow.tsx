@@ -27,6 +27,72 @@ const fieldClass =
 
 const defaultVotePackage = votePackages.at(-1)!
 
+type TestPeriod = {
+  startDate: string
+  endDate: string
+}
+
+const defaultTestPeriod: TestPeriod = {
+  startDate: "2026-08-20",
+  endDate: "2026-08-22",
+}
+
+const periodPresets = [
+  { label: "1일", days: 1 },
+  { label: "3일", days: 3 },
+  { label: "5일", days: 5 },
+  { label: "7일", days: 7 },
+]
+
+const dayInMilliseconds = 24 * 60 * 60 * 1000
+
+function dateValueToUtc(value: string) {
+  const parts = value.split("-").map(Number)
+  const year = parts[0]
+  const month = parts[1]
+  const day = parts[2]
+
+  if (
+    year === undefined ||
+    month === undefined ||
+    day === undefined ||
+    ![year, month, day].every(Number.isFinite)
+  ) {
+    return Number.NaN
+  }
+
+  return Date.UTC(year, month - 1, day)
+}
+
+function addDaysToDateValue(value: string, days: number) {
+  const timestamp = dateValueToUtc(value)
+
+  if (!Number.isFinite(timestamp)) return value
+
+  return new Date(timestamp + days * dayInMilliseconds)
+    .toISOString()
+    .slice(0, 10)
+}
+
+function getPeriodDays(period: TestPeriod) {
+  const start = dateValueToUtc(period.startDate)
+  const end = dateValueToUtc(period.endDate)
+
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) {
+    return 0
+  }
+
+  return Math.floor((end - start) / dayInMilliseconds) + 1
+}
+
+function formatPeriodDate(value: string) {
+  const [, month, day] = value.split("-").map(Number)
+
+  if (![month, day].every(Number.isFinite)) return "날짜 선택"
+
+  return `${month}월 ${day}일`
+}
+
 function FlowButton({
   children,
   onClick,
@@ -185,17 +251,41 @@ function PosterStep({
 
 function ConditionStep({
   selectedVotes,
+  period,
   onSelectVotes,
+  onChangePeriod,
   onNext,
 }: {
   selectedVotes: number
+  period: TestPeriod
   onSelectVotes: (votes: number) => void
+  onChangePeriod: (period: TestPeriod) => void
   onNext: () => void
 }) {
+  const [isPeriodOpen, setIsPeriodOpen] = useState(false)
   const selectedPackage =
     votePackages.find((item) => item.votes === selectedVotes) ??
     defaultVotePackage
-  const totalPrice = selectedPackage.price * activeTest.days
+  const periodDays = getPeriodDays(period)
+  const totalPrice = selectedPackage.price * periodDays
+
+  function selectPreset(days: number) {
+    const startDate = period.startDate || defaultTestPeriod.startDate
+
+    onChangePeriod({
+      startDate,
+      endDate: addDaysToDateValue(startDate, days - 1),
+    })
+  }
+
+  function changeStartDate(startDate: string) {
+    const days = periodDays || activeTest.days
+
+    onChangePeriod({
+      startDate,
+      endDate: addDaysToDateValue(startDate, days - 1),
+    })
+  }
 
   return (
     <section className="flex min-h-[calc(100svh-56px)] flex-1 flex-col px-5 pt-5 sm:px-8 md:mx-auto md:w-full md:max-w-3xl md:px-8 md:pt-10">
@@ -238,13 +328,95 @@ function ConditionStep({
       </div>
 
       <h2 className="mt-6 text-[17px] font-semibold">테스트 운영 기간</h2>
-      <button
-        type="button"
-        className="mt-2 flex h-12 w-full items-center justify-between rounded-xl bg-[#26262b] px-4 text-left text-[15px]"
-      >
-        8월 20일&nbsp; ~ &nbsp;8월 22일
-        <ChevronDownIcon className="size-4 text-[#adadb8]" aria-hidden="true" />
-      </button>
+      <div className="relative mt-2">
+        <button
+          type="button"
+          className={`flex h-12 w-full items-center justify-between rounded-xl border bg-[#26262b] px-4 text-left text-[15px] transition-colors hover:border-[#0a85ff] ${
+            isPeriodOpen ? "border-[#0a85ff]" : "border-transparent"
+          }`}
+          aria-expanded={isPeriodOpen}
+          aria-controls="test-period-picker"
+          onClick={() => setIsPeriodOpen((current) => !current)}
+        >
+          <span>
+            {formatPeriodDate(period.startDate)}
+            <span className="px-2 text-[#adadb8]">~</span>
+            {formatPeriodDate(period.endDate)}
+          </span>
+          <ChevronDownIcon
+            className={`size-4 text-[#adadb8] transition-transform ${
+              isPeriodOpen ? "rotate-180" : ""
+            }`}
+            aria-hidden="true"
+          />
+        </button>
+        {isPeriodOpen ? (
+          <div
+            id="test-period-picker"
+            className="absolute inset-x-0 top-[calc(100%+8px)] z-10 rounded-2xl border border-[#3d3d42] bg-[#1c1c1f] p-4 shadow-2xl"
+          >
+            <p className="text-xs font-semibold text-[#adadb8]">
+              빠른 기간 선택
+            </p>
+            <div className="mt-2 grid grid-cols-4 gap-2">
+              {periodPresets.map((preset) => {
+                const selected = periodDays === preset.days
+
+                return (
+                  <button
+                    key={preset.days}
+                    type="button"
+                    className={`h-9 rounded-lg border text-xs font-semibold transition-colors ${
+                      selected
+                        ? "border-[#0a85ff] bg-[#0a85ff] text-white"
+                        : "border-[#3d3d42] text-[#adadb8] hover:border-[#0a85ff] hover:text-white"
+                    }`}
+                    aria-pressed={selected}
+                    onClick={() => selectPreset(preset.days)}
+                  >
+                    {preset.label}
+                  </button>
+                )
+              })}
+            </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <label className="text-xs text-[#adadb8]" htmlFor="start-date">
+                시작일
+                <input
+                  id="start-date"
+                  type="date"
+                  className={`${fieldClass} mt-1 [color-scheme:dark]`}
+                  value={period.startDate}
+                  onChange={(event) => changeStartDate(event.target.value)}
+                />
+              </label>
+              <label className="text-xs text-[#adadb8]" htmlFor="end-date">
+                종료일
+                <input
+                  id="end-date"
+                  type="date"
+                  min={period.startDate}
+                  className={`${fieldClass} mt-1 [color-scheme:dark]`}
+                  value={period.endDate}
+                  onChange={(event) =>
+                    onChangePeriod({
+                      ...period,
+                      endDate: event.target.value,
+                    })
+                  }
+                />
+              </label>
+            </div>
+            <button
+              type="button"
+              className="mt-4 h-10 w-full rounded-xl bg-[#26262b] text-sm font-semibold text-white transition-colors hover:bg-[#303036]"
+              onClick={() => setIsPeriodOpen(false)}
+            >
+              선택 완료
+            </button>
+          </div>
+        ) : null}
+      </div>
       <p className="mt-2 text-xs text-[#adadb8]">
         매일 최소 보장 투표 수를 기준으로 운영됩니다.
       </p>
@@ -265,7 +437,7 @@ function ConditionStep({
           </div>
           <div className="flex justify-between">
             <span className="text-[#adadb8]">운영 기간</span>
-            <span>{activeTest.days}일</span>
+            <span>{periodDays}일</span>
           </div>
         </div>
       </div>
@@ -298,17 +470,20 @@ function ConditionStep({
 
 function ConfirmStep({
   selectedVotes,
+  period,
   onConfirm,
   onCancel,
 }: {
   selectedVotes: number
+  period: TestPeriod
   onConfirm: () => void
   onCancel: () => void
 }) {
   const selectedPackage =
     votePackages.find((item) => item.votes === selectedVotes) ??
     defaultVotePackage
-  const totalPrice = selectedPackage.price * activeTest.days
+  const periodDays = getPeriodDays(period)
+  const totalPrice = selectedPackage.price * periodDays
 
   return (
     <div className="relative min-h-[calc(100svh-56px)] flex-1 px-5 pt-8">
@@ -335,7 +510,12 @@ function ConfirmStep({
           </div>
           <div className="flex justify-between gap-4">
             <span className="text-[#adadb8]">운영 기간</span>
-            <span className="font-semibold">8월 20일 ~ 8월 22일 / 3일</span>
+            <span className="text-right font-semibold">
+              {formatPeriodDate(period.startDate)} ~{" "}
+              {formatPeriodDate(period.endDate)}
+              <br />
+              {periodDays}일
+            </span>
           </div>
           <div className="flex justify-between gap-4">
             <span className="text-[#adadb8]">하루 사용 금액</span>
@@ -379,6 +559,7 @@ export function NewTestFlow({ mode = "new" }: NewTestFlowProps) {
   const [question, setQuestion] = useState(activeTest.question)
   const [fileNames, setFileNames] = useState<[string, string]>(["", ""])
   const [selectedVotes, setSelectedVotes] = useState(activeTest.dailyVotes)
+  const [period, setPeriod] = useState<TestPeriod>(defaultTestPeriod)
 
   const headerTitle = mode === "edit" ? "테스트 수정" : "새 A/B 테스트 만들기"
   const fileUploadState = useMemo(
@@ -414,13 +595,16 @@ export function NewTestFlow({ mode = "new" }: NewTestFlowProps) {
       {step === 2 ? (
         <ConditionStep
           selectedVotes={selectedVotes}
+          period={period}
           onSelectVotes={setSelectedVotes}
+          onChangePeriod={setPeriod}
           onNext={() => setStep(3)}
         />
       ) : null}
       {step === 3 ? (
         <ConfirmStep
           selectedVotes={selectedVotes}
+          period={period}
           onCancel={() => setStep(2)}
           onConfirm={() => router.push(`/owner/tests/${activeTest.id}`)}
         />
