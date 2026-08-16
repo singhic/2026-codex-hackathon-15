@@ -17,6 +17,7 @@ type OwnerShellProps = {
   headerTitle?: string
   headerAction?: React.ReactNode
   showTabs?: boolean
+  storeId?: string
 }
 
 export function OwnerShell({
@@ -26,26 +27,36 @@ export function OwnerShell({
   headerTitle,
   headerAction,
   showTabs = true,
+  storeId,
 }: OwnerShellProps) {
+  const storeQuery = storeId ? `?storeId=${encodeURIComponent(storeId)}` : ""
+
   return (
-    <main className="min-h-svh bg-[#303033] text-white">
+    <main className="min-h-svh overflow-x-hidden bg-[#303033] text-white">
       <div className="mx-auto flex min-h-svh w-full max-w-[390px] bg-black md:max-w-none md:bg-[#101014]">
         <aside className="hidden w-64 shrink-0 flex-col border-r border-white/10 bg-[#141417] px-6 py-8 md:flex">
-          <Link href="/owner/dashboard" className="block">
-            <p className="text-xl font-black tracking-tight">THE PICK</p>
-            <p className="mt-2 text-xs text-[#adadb8]">사장님 스튜디오</p>
+          <Link href={`/owner/dashboard${storeQuery}`} className="block">
+            <div className="flex items-center gap-2">
+              <p className="text-xl font-black tracking-tight">THE PICK</p>
+              <span className="rounded-full bg-[#1a334f] px-2 py-1 text-[10px] font-semibold text-[#80c4ff]">
+                사장님
+              </span>
+            </div>
+            <p className="mt-2 text-xs text-[#adadb8]">
+              포스터 테스트 스튜디오
+            </p>
           </Link>
 
           <nav aria-label="사장님 데스크톱 메뉴" className="mt-12 space-y-2">
             <DesktopNavLink
-              href="/owner/dashboard"
+              href={`/owner/dashboard${storeQuery}`}
               active={activeTab === "dashboard"}
               icon={<HomeIcon className="size-5" aria-hidden="true" />}
             >
               진행 중
             </DesktopNavLink>
             <DesktopNavLink
-              href="/owner/tests"
+              href={`/owner/tests${storeQuery}`}
               active={activeTab === "tests"}
               icon={<FileTextIcon className="size-5" aria-hidden="true" />}
             >
@@ -54,6 +65,13 @@ export function OwnerShell({
           </nav>
 
           <div className="mt-auto border-t border-white/10 pt-5">
+            <Link
+              href="/owner/wallet"
+              className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-[#adadb8] transition-colors hover:bg-white/5 hover:text-white"
+            >
+              <BadgeCheckIcon className="size-5" aria-hidden="true" />
+              크레딧 내역
+            </Link>
             <Link
               href="/owner/onboarding"
               className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-[#adadb8] transition-colors hover:bg-white/5 hover:text-white"
@@ -88,17 +106,17 @@ export function OwnerShell({
           {showTabs ? (
             <nav
               aria-label="사장님 메뉴"
-              className="grid h-[72px] shrink-0 grid-cols-2 bg-[#141417] px-16 pt-3 pb-5 md:hidden"
+              className="sticky bottom-0 z-20 grid h-[72px] shrink-0 grid-cols-2 border-t border-white/10 bg-[#141417]/95 px-16 pt-3 pb-5 backdrop-blur md:hidden"
             >
               <MobileNavLink
-                href="/owner/dashboard"
+                href={`/owner/dashboard${storeQuery}`}
                 active={activeTab === "dashboard"}
                 icon={<TestTubesIcon className="size-5" aria-hidden="true" />}
               >
                 테스트
               </MobileNavLink>
               <MobileNavLink
-                href="/owner/tests"
+                href={`/owner/tests${storeQuery}`}
                 active={activeTab === "tests"}
                 icon={<BadgeCheckIcon className="size-5" aria-hidden="true" />}
               >
@@ -211,7 +229,7 @@ export function PosterPlaceholder({
     <div
       role="img"
       aria-label={`${label} 포스터 미리보기`}
-      className={`relative flex items-center justify-center overflow-hidden rounded-xl border border-[#3b3b40] text-center text-sm text-[#adadb8] ${
+      className={`relative flex items-center justify-center overflow-hidden rounded-xl border border-[#3b3b40] bg-[#111114] text-center text-sm text-[#adadb8] ${
         compact ? "h-[78px] w-[84px]" : "h-[196px] w-full"
       } ${
         variant === "a"
@@ -225,7 +243,7 @@ export function PosterPlaceholder({
           alt={imageAlt ?? label}
           fill
           sizes={compact ? "84px" : "(min-width: 768px) 360px, 50vw"}
-          className="object-cover"
+          className="object-contain"
         />
       ) : (
         <span>{label}</span>

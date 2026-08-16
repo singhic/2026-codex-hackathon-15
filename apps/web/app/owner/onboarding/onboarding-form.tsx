@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -20,6 +20,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card"
+
+import { RegionSelect } from "@/components/region-select"
+import {
+  ApiError,
+  apiFetch,
+  type Catalog,
+  type StoreSummary,
+} from "@/lib/api/client"
 
 const steps = ["서비스 안내", "매장 정보", "설정 완료"]
 
@@ -47,10 +55,51 @@ const features: Array<{
 
 export function OnboardingForm() {
   const [step, setStep] = useState(1)
+  const [regionCode, setRegionCode] = useState("")
+  const [catalog, setCatalog] = useState<Catalog | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  useEffect(() => {
+    void apiFetch<Catalog>("/api/catalog")
+      .then(setCatalog)
+      .catch(() => setErrorMessage("업종 목록을 불러오지 못했습니다."))
+  }, [])
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setStep(3)
+    const formData = new FormData(event.currentTarget)
+    const name = String(formData.get("name") ?? "").trim()
+    const categoryId = Number(formData.get("categoryId"))
+    const address = String(formData.get("address") ?? "").trim()
+
+    setIsSaving(true)
+    setErrorMessage(null)
+
+    try {
+      await apiFetch<StoreSummary>("/api/owner/stores", {
+        method: "POST",
+        body: JSON.stringify({ name, categoryId, regionCode, address }),
+      })
+      setStep(3)
+    } catch (error) {
+      if (error instanceof ApiError && error.code === "CONSENT_REQUIRED") {
+        setErrorMessage(
+          "필수 약관 동의가 필요합니다. 온보딩 약관으로 이동해 주세요."
+        )
+      } else if (
+        error instanceof ApiError &&
+        error.code === "UNAUTHENTICATED"
+      ) {
+        setErrorMessage("로그인 세션이 만료되었습니다. 다시 로그인해 주세요.")
+      } else {
+        setErrorMessage(
+          "매장 정보를 저장하지 못했습니다. 입력값을 확인해 주세요."
+        )
+      }
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   return (
@@ -151,22 +200,64 @@ export function OnboardingForm() {
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="category" className="text-sm font-medium">
+                <label htmlFor="categoryId" className="text-sm font-medium">
                   매장 업종
                 </label>
-                <input
-                  id="category"
-                  name="category"
-                  type="text"
+                <select
+                  id="categoryId"
+                  name="categoryId"
                   required
-                  maxLength={40}
-                  placeholder="예: 카페"
-                  className="h-11 w-full rounded-lg border bg-background px-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                />
+                  disabled={!catalog}
+                  className="h-11 w-full rounded-lg border bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                  defaultValue={catalog?.categories[0]?.id ?? ""}
+                >
+                  {catalog?.categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
                 <p className="text-xs text-[#adadb8]">
                   고객이 이해하기 쉬운 업종명으로 입력해 주세요.
                 </p>
               </div>
+
+              <div className="space-y-2">
+                <label htmlFor="regionCode" className="text-sm font-medium">
+                  매장 지역
+                </label>
+                <RegionSelect
+                  id="regionCode"
+                  name="regionCode"
+                  required
+                  value={regionCode}
+                  onChange={setRegionCode}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="address" className="text-sm font-medium">
+                  매장 주소
+                </label>
+                <input
+                  id="address"
+                  name="address"
+                  type="text"
+                  required
+                  maxLength={240}
+                  placeholder="예: 서울 성동구 성수동"
+                  className="h-11 w-full rounded-lg border bg-background px-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                />
+              </div>
+
+              {errorMessage ? (
+                <p
+                  className="rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-200"
+                  role="alert"
+                >
+                  {errorMessage}
+                </p>
+              ) : null}
 
               <div className="flex flex-col-reverse gap-2 sm:flex-row">
                 <Button
@@ -180,10 +271,11 @@ export function OnboardingForm() {
                 </Button>
                 <Button
                   type="submit"
+                  disabled={isSaving || !catalog}
                   size="lg"
                   className="h-11 flex-1 rounded-[14px] bg-[#0a85ff] text-white hover:bg-[#0a85ff]/90"
                 >
-                  설정 완료하기
+                  {isSaving ? "저장 중..." : "설정 완료하기"}
                 </Button>
               </div>
             </form>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import {
   ArrowRightIcon,
   CheckIcon,
@@ -8,9 +8,19 @@ import {
   InfoIcon,
 } from "lucide-react"
 import Image from "next/image"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 
 import { Button } from "@workspace/ui/components/button"
+
+import {
+  ApiError,
+  apiFetch,
+  getApiErrorMessage,
+  type Catalog,
+  type CreatedDraft,
+  type StoreSummary,
+} from "@/lib/api/client"
+import { createClient } from "@/lib/supabase/client"
 
 import {
   activeTest,
@@ -27,8 +37,6 @@ type FlowStep = 1 | 2 | 3
 
 const fieldClass =
   "h-11 w-full rounded-xl border border-[#3b3b40] bg-[#1c1c1e] px-3.5 text-[13px] text-white outline-none placeholder:text-[#adadb8] focus:border-[#0a85ff] focus:ring-1 focus:ring-[#0a85ff]"
-
-const defaultVotePackage = votePackages.at(-1)!
 
 type TestPeriod = {
   startDate: string
@@ -130,7 +138,7 @@ function PosterUploadCard({
   inputId: string
   imageSrc: string
   highlighted?: boolean
-  onChange: (fileName: string) => void
+  onChange: (file: File) => void
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -148,7 +156,7 @@ function PosterUploadCard({
           alt={`포스터 ${label}`}
           fill
           sizes="(min-width: 768px) 360px, 50vw"
-          className="object-cover"
+          className="object-contain"
         />
         <span className="absolute inset-x-4 bottom-3 rounded-xl bg-[#1c1c1e]/95 px-3 py-2 text-center text-xs font-semibold text-[#adadb8]">
           이미지 교체
@@ -167,7 +175,7 @@ function PosterUploadCard({
         className="sr-only"
         onChange={(event) => {
           const file = event.target.files?.[0]
-          if (file) onChange(file.name)
+          if (file) onChange(file)
         }}
       />
       <button
@@ -195,7 +203,7 @@ function PosterStep({
   question: string
   onTitleChange: (value: string) => void
   onQuestionChange: (value: string) => void
-  onFileChange: (index: 0 | 1, value: string) => void
+  onFileChange: (index: 0 | 1, file: File) => void
   onNext: () => void
 }) {
   return (
@@ -263,20 +271,21 @@ function PosterStep({
 function ConditionStep({
   selectedVotes,
   period,
+  packages,
   onSelectVotes,
   onChangePeriod,
   onNext,
 }: {
   selectedVotes: number
   period: TestPeriod
+  packages: Array<{ votes: number; price: number }>
   onSelectVotes: (votes: number) => void
   onChangePeriod: (period: TestPeriod) => void
   onNext: () => void
 }) {
   const [isPeriodOpen, setIsPeriodOpen] = useState(false)
   const selectedPackage =
-    votePackages.find((item) => item.votes === selectedVotes) ??
-    defaultVotePackage
+    packages.find((item) => item.votes === selectedVotes) ?? packages.at(-1)!
   const periodDays = getPeriodDays(period)
   const totalPrice = selectedPackage.price * periodDays
 
@@ -306,7 +315,7 @@ function ConditionStep({
       </p>
 
       <div className="mt-5 grid grid-cols-2 gap-2">
-        {votePackages.map((item) => {
+        {packages.map((item) => {
           const selected = item.votes === selectedVotes
 
           return (
@@ -482,17 +491,18 @@ function ConditionStep({
 function ConfirmStep({
   selectedVotes,
   period,
+  packages,
   onConfirm,
   onCancel,
 }: {
   selectedVotes: number
   period: TestPeriod
+  packages: Array<{ votes: number; price: number }>
   onConfirm: () => void
   onCancel: () => void
 }) {
   const selectedPackage =
-    votePackages.find((item) => item.votes === selectedVotes) ??
-    defaultVotePackage
+    packages.find((item) => item.votes === selectedVotes) ?? packages.at(-1)!
   const periodDays = getPeriodDays(period)
   const totalPrice = selectedPackage.price * periodDays
 
@@ -563,29 +573,304 @@ function ConfirmStep({
 
 export function NewTestFlow({ mode = "new" }: NewTestFlowProps) {
   const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const requestedStoreId = searchParams.get("storeId")
+  const editingTestId = pathname.match(/\/owner\/tests\/([^/]+)\/edit/)?.[1]
   const [step, setStep] = useState<FlowStep>(1)
+  const [stores, setStores] = useState<StoreSummary[]>([])
+  const [catalog, setCatalog] = useState<Catalog | null>(null)
+  const [isPreparing, setIsPreparing] = useState(true)
   const [title, setTitle] = useState(
     mode === "edit" ? activeTest.title : "신메뉴 딸기 라떼 홍보 포스터"
   )
   const [question, setQuestion] = useState(activeTest.question)
+  const [files, setFiles] = useState<[File | null, File | null]>([null, null])
   const [fileNames, setFileNames] = useState<[string, string]>(["", ""])
+  const [optionIds, setOptionIds] = useState<[string, string]>(["", ""])
   const [selectedVotes, setSelectedVotes] = useState(activeTest.dailyVotes)
   const [period, setPeriod] = useState<TestPeriod>(defaultTestPeriod)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [idempotencyKey, setIdempotencyKey] = useState<string | null>(null)
 
-  const headerTitle = mode === "edit" ? "테스트 수정" : "새 A/B 테스트 만들기"
+  const selectedStore = useMemo(
+    () =>
+      stores.find((store) => store.id === requestedStoreId) ??
+      stores[0] ??
+      null,
+    [requestedStoreId, stores]
+  )
+  const packages = useMemo(
+    () =>
+      catalog?.pricingPackages.map((item) => ({
+        votes: item.targetVotes,
+        price: item.priceCredits,
+      })) ?? votePackages,
+    [catalog]
+  )
   const fileUploadState = useMemo(
     () => fileNames.filter(Boolean).length,
     [fileNames]
   )
+  const headerTitle = mode === "edit" ? "테스트 수정" : "새 A/B 테스트 만들기"
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadData() {
+      setIsPreparing(true)
+      setErrorMessage(null)
+
+      try {
+        const [nextStores, nextCatalog] = await Promise.all([
+          apiFetch<StoreSummary[]>("/api/owner/stores"),
+          apiFetch<Catalog>("/api/catalog"),
+        ])
+        if (cancelled) return
+
+        setStores(nextStores)
+        setCatalog(nextCatalog)
+
+        const nextStore =
+          nextStores.find((store) => store.id === requestedStoreId) ??
+          nextStores[0]
+        if (!nextStore) {
+          setErrorMessage("등록된 매장이 없습니다. 먼저 매장을 등록해 주세요.")
+          return
+        }
+
+        if (nextStore.id !== requestedStoreId) {
+          router.replace(
+            `${pathname}?storeId=${encodeURIComponent(nextStore.id)}`
+          )
+        }
+
+        const firstPackage = nextCatalog.pricingPackages.at(-1)
+        if (firstPackage && mode === "new") {
+          setSelectedVotes(firstPackage.targetVotes)
+        }
+
+        if (mode === "edit" && editingTestId) {
+          const dashboard = await apiFetch<{
+            tests: Array<{
+              id: string
+              title: string
+              startsAt: string
+              endsAt: string
+              targetVotes: number
+            }>
+          }>(`/api/owner/stores/${nextStore.id}/tests`)
+          const existingTest = dashboard.tests.find(
+            (test) => test.id === editingTestId
+          )
+          if (existingTest) {
+            setTitle(existingTest.title)
+            setSelectedVotes(existingTest.targetVotes)
+            setPeriod({
+              startDate: existingTest.startsAt.slice(0, 10),
+              endDate: existingTest.endsAt.slice(0, 10),
+            })
+          }
+
+          const progress = await apiFetch<{
+            options: Array<{ id: string; position: 1 | 2 }>
+          }>(
+            `/api/owner/stores/${nextStore.id}/tests/${editingTestId}/progress`
+          )
+          const sortedOptions = [...progress.options].sort(
+            (a, b) => a.position - b.position
+          )
+          if (sortedOptions[0] && sortedOptions[1]) {
+            setOptionIds([sortedOptions[0].id, sortedOptions[1].id])
+          }
+        }
+      } catch (error) {
+        if (error instanceof ApiError && error.code === "UNAUTHENTICATED") {
+          router.replace(`/login?next=${encodeURIComponent(pathname)}`)
+          return
+        }
+        setErrorMessage(
+          error instanceof ApiError
+            ? getApiErrorMessage(error.code)
+            : "테스트 설정을 불러오지 못했습니다."
+        )
+      } finally {
+        if (!cancelled) setIsPreparing(false)
+      }
+    }
+
+    void loadData()
+    return () => {
+      cancelled = true
+    }
+  }, [editingTestId, mode, pathname, requestedStoreId, router])
+
+  async function uploadPoster(
+    storeId: string,
+    testId: string,
+    optionId: string,
+    file: File
+  ) {
+    if (file.size > 5 * 1024 * 1024) {
+      throw new Error("FILE_TOO_LARGE")
+    }
+
+    const extensionByType: Record<string, string> = {
+      "image/jpeg": "jpg",
+      "image/png": "png",
+      "image/webp": "webp",
+    }
+    const extension = extensionByType[file.type]
+    if (!extension) throw new Error("UNSUPPORTED_FILE_TYPE")
+
+    const { assetPath } = await apiFetch<{ assetPath: string }>(
+      `/api/owner/stores/${storeId}/tests/${testId}/options/${optionId}`,
+      {
+        method: "POST",
+        body: JSON.stringify({ extension }),
+      }
+    )
+    const supabase = createClient()
+    const { error } = await supabase.storage
+      .from("test-posters")
+      .upload(assetPath, file, { contentType: file.type, upsert: false })
+    if (error) throw new Error("ASSET_UPLOAD_FAILED")
+
+    await apiFetch(
+      `/api/owner/stores/${storeId}/tests/${testId}/options/${optionId}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ assetPath }),
+      }
+    )
+  }
+
+  async function handleConfirm() {
+    if (!selectedStore) return
+    if (!files[0] || !files[1]) {
+      setErrorMessage("A와 B 포스터 이미지를 모두 업로드해 주세요.")
+      setStep(1)
+      return
+    }
+
+    setIsSubmitting(true)
+    setErrorMessage(null)
+
+    try {
+      const startsAt = toIsoDate(period.startDate)
+      const endsAt = toIsoDate(period.endDate, true)
+      const body = {
+        title,
+        question,
+        startsAt,
+        endsAt,
+        targetVotes: selectedVotes,
+        rewardPoints: 10,
+      }
+      let testId = editingTestId
+      let nextOptionIds = optionIds
+
+      if (mode === "edit" && testId) {
+        await apiFetch(
+          `/api/owner/stores/${selectedStore.id}/tests/${testId}`,
+          { method: "PATCH", body: JSON.stringify(body) }
+        )
+      } else {
+        const draft = await apiFetch<CreatedDraft>(
+          `/api/owner/stores/${selectedStore.id}/tests`,
+          { method: "POST", body: JSON.stringify(body) }
+        )
+        testId = draft.id
+        nextOptionIds = [draft.optionAId, draft.optionBId]
+        setOptionIds(nextOptionIds)
+      }
+
+      if (!testId || !nextOptionIds[0] || !nextOptionIds[1]) {
+        throw new Error("DRAFT_OPTIONS_MISSING")
+      }
+
+      await Promise.all([
+        uploadPoster(selectedStore.id, testId, nextOptionIds[0], files[0]),
+        uploadPoster(selectedStore.id, testId, nextOptionIds[1], files[1]),
+      ])
+
+      const key = idempotencyKey ?? crypto.randomUUID()
+      if (!idempotencyKey) setIdempotencyKey(key)
+      await apiFetch(
+        `/api/owner/stores/${selectedStore.id}/tests/${testId}/start`,
+        {
+          method: "POST",
+          body: JSON.stringify({ idempotencyKey: key }),
+        }
+      )
+      router.push(`/owner/tests/${testId}?storeId=${selectedStore.id}`)
+    } catch (error) {
+      if (error instanceof ApiError && error.code === "UNAUTHENTICATED") {
+        router.replace(`/login?next=${encodeURIComponent(pathname)}`)
+        return
+      }
+
+      const message =
+        error instanceof ApiError
+          ? getApiErrorMessage(error.code)
+          : error instanceof Error && error.message === "FILE_TOO_LARGE"
+            ? "이미지는 5MB 이하로 업로드해 주세요."
+            : error instanceof Error &&
+                error.message === "UNSUPPORTED_FILE_TYPE"
+              ? "JPG, PNG, WebP 이미지만 업로드할 수 있습니다."
+              : "테스트를 저장하거나 시작하지 못했습니다. 다시 시도해 주세요."
+      setErrorMessage(message)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  if (isPreparing) {
+    return (
+      <OwnerShell showTabs={false} headerTitle={headerTitle}>
+        <div className="flex min-h-[700px] items-center justify-center text-sm text-[#adadb8]">
+          테스트 설정을 불러오는 중...
+        </div>
+      </OwnerShell>
+    )
+  }
+
+  if (!selectedStore || !catalog) {
+    return (
+      <OwnerShell showTabs={false} headerTitle={headerTitle}>
+        <div className="flex min-h-[700px] flex-col items-center justify-center px-6 text-center text-sm text-[#adadb8]">
+          <p>{errorMessage ?? "매장 정보를 찾을 수 없습니다."}</p>
+          <button
+            type="button"
+            className="mt-4 rounded-xl bg-[#0a85ff] px-5 py-3 font-semibold text-white"
+            onClick={() => router.push("/owner/onboarding")}
+          >
+            매장 등록하기
+          </button>
+        </div>
+      </OwnerShell>
+    )
+  }
 
   return (
     <OwnerShell
       showTabs={false}
       backHref={
-        mode === "edit" ? `/owner/tests/${activeTest.id}` : "/owner/tests"
+        mode === "edit"
+          ? `/owner/tests/${editingTestId}?storeId=${selectedStore.id}`
+          : `/owner/tests?storeId=${selectedStore.id}`
       }
       headerTitle={headerTitle}
     >
+      {errorMessage ? (
+        <div
+          className="mx-5 mt-4 rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-200 sm:mx-8 md:mx-auto md:w-full md:max-w-3xl"
+          role="alert"
+        >
+          {errorMessage}
+        </div>
+      ) : null}
       {step === 1 ? (
         <PosterStep
           title={title}
@@ -593,10 +878,15 @@ export function NewTestFlow({ mode = "new" }: NewTestFlowProps) {
           question={question}
           onTitleChange={setTitle}
           onQuestionChange={setQuestion}
-          onFileChange={(index, value) => {
+          onFileChange={(index, file) => {
+            setFiles((current) => {
+              const next: [File | null, File | null] = [...current]
+              next[index] = file
+              return next
+            })
             setFileNames((current) => {
               const next: [string, string] = [...current]
-              next[index] = value
+              next[index] = file.name
               return next
             })
           }}
@@ -607,6 +897,7 @@ export function NewTestFlow({ mode = "new" }: NewTestFlowProps) {
         <ConditionStep
           selectedVotes={selectedVotes}
           period={period}
+          packages={packages}
           onSelectVotes={setSelectedVotes}
           onChangePeriod={setPeriod}
           onNext={() => setStep(3)}
@@ -616,13 +907,24 @@ export function NewTestFlow({ mode = "new" }: NewTestFlowProps) {
         <ConfirmStep
           selectedVotes={selectedVotes}
           period={period}
+          packages={packages}
           onCancel={() => setStep(2)}
-          onConfirm={() => router.push(`/owner/tests/${activeTest.id}`)}
+          onConfirm={() => void handleConfirm()}
         />
+      ) : null}
+      {isSubmitting ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 px-6 text-center text-sm text-white">
+          테스트와 포스터를 저장하는 중입니다...
+        </div>
       ) : null}
       {fileUploadState > 0 ? (
         <span className="sr-only">{fileUploadState}개의 포스터가 등록됨</span>
       ) : null}
     </OwnerShell>
   )
+}
+
+function toIsoDate(value: string, endOfDay = false) {
+  const time = endOfDay ? "23:59:59" : "00:00:00"
+  return new Date(`${value}T${time}+09:00`).toISOString()
 }

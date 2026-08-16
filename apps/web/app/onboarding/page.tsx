@@ -1,8 +1,8 @@
 import { Suspense } from "react"
 
-import { NewTestFlow } from "./new-test-flow"
+import { OnboardingClient } from "./onboarding-client"
 
-export default function NewOwnerTestPage() {
+export default function OnboardingPage() {
   return (
     <Suspense
       fallback={
@@ -11,7 +11,7 @@ export default function NewOwnerTestPage() {
         </main>
       }
     >
-      <NewTestFlow />
+      <OnboardingClient />
     </Suspense>
   )
 }

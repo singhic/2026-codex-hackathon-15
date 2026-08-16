@@ -1,8 +1,8 @@
 import { Suspense } from "react"
 
-import { NewTestFlow } from "./new-test-flow"
+import { OwnerWalletClient } from "./owner-wallet-client"
 
-export default function NewOwnerTestPage() {
+export default function OwnerWalletPage() {
   return (
     <Suspense
       fallback={
@@ -11,7 +11,7 @@ export default function NewOwnerTestPage() {
         </main>
       }
     >
-      <NewTestFlow />
+      <OwnerWalletClient />
     </Suspense>
   )
 }

@@ -67,13 +67,13 @@ function getRoleLabel(role: Role) {
 }
 
 function getAuthTarget(role: Role, returnTo: string) {
-  const params = new URLSearchParams({ role, step: "4" })
+  const params = new URLSearchParams({ role })
 
   if (returnTo !== "/") {
     params.set("returnTo", returnTo)
   }
 
-  return `/login?${params.toString()}`
+  return `/onboarding?${params.toString()}`
 }
 
 function PageShell({
