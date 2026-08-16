@@ -1,13 +1,14 @@
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 
+import type { Database } from "./database.types"
 import { getSupabasePublicEnv } from "./env"
 
 export async function createClient() {
   const cookieStore = await cookies()
   const { url, publishableKey } = getSupabasePublicEnv()
 
-  return createServerClient(url, publishableKey, {
+  return createServerClient<Database>(url, publishableKey, {
     cookies: {
       getAll() {
         return cookieStore.getAll()
@@ -19,7 +20,7 @@ export async function createClient() {
           })
         } catch {
           // Server Component에서는 쿠키 쓰기가 제한됩니다. 세션 갱신은
-          // Route Handler, Server Action 또는 proxy 경계에서 처리합니다.
+          // Route Handler 또는 Server Action 경계에서 처리합니다.
         }
       },
     },
