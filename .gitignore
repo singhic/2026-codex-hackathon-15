@@ -25,6 +25,10 @@ dist
 # turbo
 .turbo
 
+# supabase local state
+supabase/.branches/
+supabase/.temp/
+
 # misc
 .DS_Store
 *.pem

@@ -9,13 +9,23 @@
     "typecheck": "turbo typecheck",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "pnpm lint && pnpm typecheck && pnpm build"
+    "check": "pnpm lint && pnpm typecheck && pnpm build",
+    "supabase": "supabase",
+    "supabase:start": "supabase start",
+    "supabase:stop": "supabase stop",
+    "supabase:reset": "supabase db reset --local",
+    "supabase:lint": "supabase db lint --local --schema api,public,private --level warning --fail-on warning",
+    "supabase:test": "supabase test db --local supabase/tests/database",
+    "supabase:test:integration": "node --test apps/web/tests/supabase-concurrency.test.mjs",
+    "supabase:types": "supabase gen types typescript --local --schema api --schema public --schema private > apps/web/lib/supabase/database.types.ts",
+    "db:check": "pnpm supabase:reset && pnpm supabase:lint && pnpm supabase:test && pnpm supabase:test:integration"
   },
   "devDependencies": {
     "@workspace/eslint-config": "workspace:*",
     "@workspace/typescript-config": "workspace:*",
     "prettier": "^3.8.3",
     "prettier-plugin-tailwindcss": "^0.8.0",
+    "supabase": "2.114.0",
     "turbo": "^2.9.18",
     "typescript": "^5"
   },
