@@ -79,8 +79,8 @@ function PageShell({
   logo?: boolean
 }) {
   return (
-    <main className="min-h-svh bg-black text-white md:bg-[#303033] md:px-8 md:py-10">
-      <div className="mx-auto flex min-h-svh w-full max-w-[390px] flex-col overflow-hidden px-5 py-7 md:grid md:min-h-[760px] md:max-w-[1200px] md:grid-cols-[minmax(0,1fr)_minmax(390px,32vw)] md:gap-10 md:rounded-[28px] md:bg-black md:px-12 md:py-12">
+    <main className="min-h-svh bg-black text-white md:px-0 md:py-0">
+      <div className="mx-auto flex min-h-svh w-full max-w-[390px] flex-col overflow-hidden px-5 py-7 md:grid md:min-h-svh md:max-w-none md:grid-cols-[minmax(0,1fr)_minmax(390px,32vw)] md:gap-[clamp(40px,5vw,96px)] md:bg-black md:px-[clamp(40px,6vw,112px)] md:py-[clamp(40px,6vh,80px)]">
         <aside className="hidden flex-col justify-center md:flex">
           <p className="text-sm font-semibold tracking-[0.24em] text-[#adadb8] uppercase">
             THE PICK

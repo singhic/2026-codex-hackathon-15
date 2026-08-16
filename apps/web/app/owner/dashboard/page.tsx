@@ -14,7 +14,7 @@ export default function OwnerDashboardPage() {
 
   return (
     <OwnerShell activeTab="dashboard">
-      <section className="flex min-h-[700px] flex-1 flex-col px-5 pt-6 sm:px-8 md:mx-auto md:w-full md:max-w-[1180px] md:px-10 md:pt-12">
+      <section className="flex min-h-[700px] flex-1 flex-col px-5 pt-6 sm:px-8 md:mx-auto md:w-full md:max-w-none md:px-[clamp(40px,5vw,96px)] md:pt-12">
         <p className="text-xl font-black tracking-tight">THE PICK</p>
         <div className="mt-6 flex items-end justify-between gap-6">
           <div>
@@ -28,7 +28,7 @@ export default function OwnerDashboardPage() {
           </span>
         </div>
 
-        <article className="mt-9 rounded-[18px] border border-[#3d3d42] bg-[#1c1c1f] p-4 md:mt-10 md:min-h-[352px] md:max-w-5xl md:p-6">
+        <article className="mt-9 rounded-[18px] border border-[#3d3d42] bg-[#1c1c1f] p-4 md:mt-10 md:min-h-[352px] md:max-w-none md:p-6">
           <div className="flex items-start justify-between gap-3">
             <span className="rounded-full bg-[#0a85ff] px-2.5 py-1 text-[11px] font-semibold">
               진행 중

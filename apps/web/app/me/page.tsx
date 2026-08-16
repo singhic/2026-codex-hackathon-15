@@ -11,8 +11,8 @@ import { PosterPlaceholder } from "../owner/_components/owner-ui"
 export default function CustomerHomePage() {
   return (
     <main className="min-h-svh bg-[#303033] text-white">
-      <div className="mx-auto min-h-svh w-full max-w-[390px] bg-black md:max-w-[1440px] md:bg-[#101014]">
-        <div className="mx-auto flex min-h-svh w-full flex-col px-5 py-7 sm:px-8 md:max-w-[1180px] md:px-10 md:py-12">
+      <div className="mx-auto min-h-svh w-full max-w-[390px] bg-black md:max-w-none md:bg-[#101014]">
+        <div className="mx-auto flex min-h-svh w-full flex-col px-5 py-7 sm:px-8 md:max-w-none md:px-[clamp(40px,5vw,96px)] md:py-12">
           <header className="flex items-center justify-between gap-4">
             <div>
               <p className="text-xl font-black tracking-tight">THE PICK</p>

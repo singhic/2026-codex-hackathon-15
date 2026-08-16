@@ -31,7 +31,7 @@ export default async function OwnerTestPage({ params }: TestPageProps) {
         </Link>
       }
     >
-      <section className="flex flex-1 flex-col px-5 pt-3 sm:px-8 md:mx-auto md:w-full md:max-w-[1180px] md:px-10 md:pt-10">
+      <section className="flex flex-1 flex-col px-5 pt-3 sm:px-8 md:mx-auto md:w-full md:max-w-none md:px-[clamp(40px,5vw,96px)] md:pt-10">
         <div className="flex items-center justify-between">
           <span className="rounded-full border border-[#3b3b40] px-4 py-1.5 text-[13px]">
             투표 진행 중
@@ -57,7 +57,7 @@ export default async function OwnerTestPage({ params }: TestPageProps) {
           <MetricCard label="상세 보기 수" value={test.detailViews} />
         </div>
 
-        <div className="mt-12 md:max-w-4xl">
+        <div className="mt-12 md:max-w-none">
           <p className="text-[15px] font-semibold">테스트 포스터</p>
           <div className="mt-3 grid grid-cols-2 gap-5">
             <PosterPlaceholder label="포스터 A" className="md:h-[280px]" />

@@ -7,7 +7,7 @@ import { activeTest, completedTest } from "../_components/mock-data"
 export default function OwnerTestsPage() {
   return (
     <OwnerShell activeTab="tests">
-      <section className="flex flex-1 flex-col px-5 pt-7 sm:px-8 md:mx-auto md:w-full md:max-w-[1180px] md:px-10 md:pt-12">
+      <section className="flex flex-1 flex-col px-5 pt-7 sm:px-8 md:mx-auto md:w-full md:max-w-none md:px-[clamp(40px,5vw,96px)] md:pt-12">
         <div className="flex items-end justify-between gap-4">
           <div>
             <p className="text-sm text-[#adadb8]">사장님 운영 공간</p>

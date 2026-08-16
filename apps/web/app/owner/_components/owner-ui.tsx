@@ -26,7 +26,7 @@ export function OwnerShell({
 }: OwnerShellProps) {
   return (
     <main className="min-h-svh bg-[#303033] text-white">
-      <div className="mx-auto flex min-h-svh w-full max-w-[390px] bg-black md:max-w-[1440px] md:bg-[#101014]">
+      <div className="mx-auto flex min-h-svh w-full max-w-[390px] bg-black md:max-w-none md:bg-[#101014]">
         <aside className="hidden w-64 shrink-0 flex-col border-r border-white/10 bg-[#141417] px-6 py-8 md:flex">
           <Link href="/owner/dashboard" className="block">
             <p className="text-xl font-black tracking-tight">THE PICK</p>
@@ -63,7 +63,7 @@ export function OwnerShell({
 
         <div className="flex min-w-0 flex-1 flex-col">
           {backHref || headerTitle ? (
-            <header className="flex min-h-[56px] items-center gap-2 px-5 pt-2 md:mx-auto md:w-full md:max-w-[1180px] md:px-10 md:pt-8">
+            <header className="flex min-h-[56px] items-center gap-2 px-5 pt-2 md:mx-auto md:w-full md:max-w-none md:px-[clamp(40px,5vw,96px)] md:pt-8">
               {backHref ? (
                 <Link
                   href={backHref}
