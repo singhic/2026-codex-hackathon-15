@@ -13,9 +13,8 @@ const fontMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "15 Fullstack Boilerplate",
-  description:
-    "Next.js, Supabase, Tailwind CSS, shadcn/ui 기반 팀 풀스택 보일러플레이트",
+  title: "15 Fullstack | A/B Test Studio",
+  description: "고객 투표로 더 효과적인 홍보 포스터를 선택하세요.",
 }
 
 export default function RootLayout({
