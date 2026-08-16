@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client"
 
 function GoogleIcon() {
   return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
+    <svg className="size-5" viewBox="0 0 24 24" aria-hidden="true">
       <path
         fill="#4285F4"
         d="M21.6 12.23c0-.71-.06-1.4-.18-2.07H12v3.92h5.38a4.6 4.6 0 0 1-2 3.02v2.54h3.24c1.9-1.75 2.98-4.32 2.98-7.41Z"
@@ -63,15 +63,14 @@ export function GoogleLoginButton({ nextPath }: GoogleLoginButtonProps) {
     <div className="space-y-3">
       <Button
         type="button"
-        variant="outline"
         size="lg"
-        className="h-11 w-full text-sm"
+        className="h-14 w-full rounded-2xl bg-white text-base font-semibold text-[#1f1f1f] hover:bg-white/90"
         disabled={isPending}
         aria-busy={isPending}
         onClick={handleGoogleLogin}
       >
         <GoogleIcon />
-        {isPending ? "Google로 이동 중..." : "Google 계정으로 계속하기"}
+        {isPending ? "Google로 이동 중..." : "Google로 계속하기"}
       </Button>
       {errorMessage ? (
         <p className="text-sm text-destructive" role="alert">

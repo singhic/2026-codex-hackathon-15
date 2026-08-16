@@ -1,4 +1,4 @@
-export const DEFAULT_POST_LOGIN_PATH = "/owner/onboarding"
+export const DEFAULT_POST_LOGIN_PATH = "/"
 
 export function getSafeNextPath(
   value: string | null | undefined,
