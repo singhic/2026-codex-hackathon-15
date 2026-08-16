@@ -36,7 +36,7 @@ export function SplashIntro({ nextPath = "/login" }: { nextPath?: string }) {
       role="status"
       aria-label="더픽 시작 화면"
     >
-      <div className="relative flex aspect-[390/844] h-[min(844px,calc(100svh-40px))] w-auto max-w-[calc(100vw-40px)] items-center justify-center overflow-hidden rounded-[18px] bg-black md:h-[min(960px,calc(100svh-64px))] md:max-w-none">
+      <div className="relative flex aspect-[390/844] h-[min(844px,calc(100svh-40px))] w-auto max-w-[calc(100vw-40px)] items-center justify-center overflow-hidden rounded-[18px] bg-black md:aspect-auto md:h-full md:w-full md:max-w-none md:rounded-none">
         <p
           className={`text-[52px] leading-none font-black tracking-[-0.07em] text-white transition-all duration-700 ease-out md:text-[60px] ${
             logoVisible ? "scale-100 opacity-100" : "scale-105 opacity-0"
