@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { ArrowRightIcon, MapPinIcon } from "lucide-react"
+import { ArrowRightIcon, MapPinIcon, PlusIcon } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 
@@ -16,7 +16,9 @@ import { getRegionLabel } from "@/lib/regions"
 
 import { OwnerShell, PosterPlaceholder } from "../_components/owner-ui"
 
-export function OwnerTestsClient() {
+type OwnerTestsView = "tests" | "picks"
+
+export function OwnerTestsClient({ view = "tests" }: { view?: OwnerTestsView }) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -82,15 +84,15 @@ export function OwnerTestsClient() {
 
   if (isLoading) {
     return (
-      <OwnerShell activeTab="tests">
-        <Message>테스트 목록을 불러오는 중...</Message>
+      <OwnerShell activeTab={view}>
+        <Message>목록을 불러오는 중...</Message>
       </OwnerShell>
     )
   }
 
   if (errorMessage) {
     return (
-      <OwnerShell activeTab="tests">
+      <OwnerShell activeTab={view}>
         <Message>
           <p>{errorMessage}</p>
           <button
@@ -107,7 +109,7 @@ export function OwnerTestsClient() {
 
   if (!selectedStore) {
     return (
-      <OwnerShell activeTab="tests">
+      <OwnerShell activeTab={view}>
         <Message>
           <p>등록된 매장이 없습니다.</p>
           <Link
@@ -121,14 +123,41 @@ export function OwnerTestsClient() {
     )
   }
 
-  const completedTests =
-    dashboard?.tests.filter((test) => test.status === "completed") ?? []
+  const visibleTests =
+    dashboard?.tests.filter((test) =>
+      view === "picks" ? test.status === "completed" : test.status !== "completed"
+    ) ?? []
 
   return (
-    <OwnerShell activeTab="tests" storeId={selectedStore.id}>
+    <OwnerShell activeTab={view} storeId={selectedStore.id}>
       <section className="flex flex-1 flex-col px-5 pt-7 sm:px-8 md:mx-auto md:w-full md:max-w-none md:px-[clamp(40px,5vw,96px)] md:pt-12">
-        <div>
-          <label className="flex w-fit max-w-full items-center gap-2 text-sm text-[#adadb8]">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-base text-[#adadb8]">
+              사장님 운영 공간
+            </p>
+            <h1 className="mt-4 text-[30px] leading-none font-semibold">
+              {view === "picks" ? "완료 리포트" : "내 테스트"}
+            </h1>
+          </div>
+          <div className="flex items-start gap-3">
+            <span className="mt-1 rounded-full border border-[#0a85ff] px-3 py-1 text-[13px] font-medium text-[#0a85ff]">
+              사장님
+            </span>
+            {view === "tests" ? (
+              <Link
+                href={`/owner/tests/new?storeId=${selectedStore.id}`}
+                aria-label="새 테스트 만들기"
+                className="inline-flex size-16 items-center justify-center rounded-full bg-[#0a85ff] text-white transition-colors hover:bg-[#2b9bff]"
+              >
+                <PlusIcon className="size-8" strokeWidth={2} aria-hidden="true" />
+              </Link>
+            ) : null}
+          </div>
+        </div>
+
+        {stores.length > 1 ? (
+          <label className="mt-6 flex w-fit max-w-full items-center gap-2 text-sm text-[#adadb8]">
             <MapPinIcon
               className="size-4 shrink-0 text-[#0a85ff]"
               aria-hidden="true"
@@ -154,37 +183,37 @@ export function OwnerTestsClient() {
               ))}
             </select>
           </label>
-          <h1 className="mt-4 text-[26px] font-semibold">완료 리포트</h1>
-          <p className="mt-2 text-sm text-[#adadb8]">
-            고객의 픽이 결정된 테스트를 확인하세요.
-          </p>
-        </div>
+        ) : null}
 
-        {completedTests.length ? (
-          <div className="mt-8 grid gap-4 pb-8 md:grid-cols-2 md:gap-5">
-            {completedTests.map((test) => (
+        {visibleTests.length ? (
+          <div className="mt-16 grid gap-4 pb-8 md:grid-cols-2 md:gap-5">
+            {visibleTests.map((test) => (
               <Link
                 key={test.id}
-                href={`/owner/tests/${test.id}/results?storeId=${selectedStore.id}`}
-                className="block rounded-[18px] border border-[#3d3d42] bg-[#1c1c1f] p-4 transition-colors hover:border-[#0a85ff] md:p-6"
+                href={
+                  view === "picks"
+                    ? `/owner/tests/${test.id}/results?storeId=${selectedStore.id}`
+                    : `/owner/tests/${test.id}?storeId=${selectedStore.id}`
+                }
+                className="block rounded-[26px] border border-[#3d3d42] bg-[#1c1c1f] p-6 transition-colors hover:border-[#0a85ff] md:p-7"
               >
                 <div className="flex items-center justify-between gap-3">
-                  <span className="rounded-full bg-[#1a334f] px-2.5 py-1 text-[11px] font-semibold text-[#80c4ff]">
-                    완료 리포트
+                  <span className="rounded-full bg-[#0a85ff] px-3 py-2 text-[13px] font-semibold text-white">
+                    {view === "picks" ? "완료 리포트" : getStatusLabel(test.status)}
                   </span>
                   <ArrowRightIcon
-                    className="size-4 text-[#adadb8]"
+                    className="size-7 text-[#adadb8]"
                     aria-hidden="true"
                   />
                 </div>
-                <p className="mt-4 text-base font-semibold">{test.title}</p>
-                <p className="mt-1 text-xs text-[#adadb8]">
+                <p className="mt-7 text-[22px] font-semibold">{test.title}</p>
+                <p className="mt-2 text-[17px] text-[#adadb8]">
                   {test.voteCount} / {test.targetVotes}명 참여
                 </p>
-                <p className="mt-1 text-xs text-[#adadb8]">
+                <p className="mt-1 text-sm text-[#adadb8]">
                   {formatDateRange(test.startsAt, test.endsAt)}
                 </p>
-                <div className="mt-4 grid grid-cols-2 gap-3">
+                <div className="mt-7 grid grid-cols-2 gap-5">
                   <PosterPlaceholder label="포스터 A" />
                   <PosterPlaceholder label="포스터 B" variant="b" />
                 </div>
@@ -193,7 +222,9 @@ export function OwnerTestsClient() {
           </div>
         ) : (
           <div className="mt-8 rounded-[18px] border border-dashed border-[#3d3d42] p-10 text-center text-sm text-[#adadb8]">
-            아직 완료된 리포트가 없습니다.
+            {view === "picks"
+              ? "아직 완료된 리포트가 없습니다."
+              : "등록된 테스트가 없습니다."}
           </div>
         )}
       </section>
@@ -211,4 +242,19 @@ function Message({ children }: { children: React.ReactNode }) {
 
 function formatDateRange(startsAt: string, endsAt: string) {
   return `${new Date(startsAt).toLocaleDateString("ko-KR")} ~ ${new Date(endsAt).toLocaleDateString("ko-KR")}`
+}
+
+function getStatusLabel(status: string) {
+  switch (status) {
+    case "active":
+      return "진행 중"
+    case "scheduled":
+      return "예약됨"
+    case "draft":
+      return "초안"
+    case "cancelled":
+      return "취소됨"
+    default:
+      return "테스트"
+  }
 }

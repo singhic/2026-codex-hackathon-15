@@ -1,7 +1,6 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { DownloadIcon } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 
@@ -89,7 +88,7 @@ export function OwnerResultsClient({ testId }: { testId: string }) {
 
   if (isLoading || !result) {
     return (
-      <OwnerShell activeTab="tests">
+      <OwnerShell activeTab="picks">
         <Message>{errorMessage ?? "결과 리포트를 불러오는 중..."}</Message>
       </OwnerShell>
     )
@@ -99,10 +98,14 @@ export function OwnerResultsClient({ testId }: { testId: string }) {
     (a, b) => b.percentage - a.percentage
   )
   const winner = sortedOptions[0]
+  const loser = sortedOptions[1]
+  const winnerLabel = winner
+    ? `포스터 ${winner.position === 1 ? "A" : "B"}`
+    : "고객 픽"
 
   return (
-    <OwnerShell activeTab="tests" storeId={selectedStore?.id}>
-      <section className="flex flex-1 flex-col px-5 pt-7 sm:px-8 md:mx-auto md:w-full md:max-w-none md:px-[clamp(40px,5vw,96px)] md:pt-12">
+    <OwnerShell activeTab="picks" storeId={selectedStore?.id}>
+      <section className="flex flex-1 flex-col px-5 pt-7 pb-5 sm:px-8 md:mx-auto md:w-full md:max-w-none md:px-[clamp(40px,5vw,96px)] md:pt-12">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-[26px] font-semibold">완료 리포트</h1>
@@ -126,42 +129,43 @@ export function OwnerResultsClient({ testId }: { testId: string }) {
         </div>
 
         <h2 className="mt-8 text-[24px] font-semibold">고객이 픽한 포스터</h2>
-        <article className="relative mt-3 grid gap-4 rounded-[18px] border border-[#3d3d42] bg-[#1c1c1f] p-4 md:grid-cols-2 md:p-6">
-          {result.options.map((option) => (
-            <div key={option.id} className="relative">
-              {winner?.id === option.id ? (
-                <span className="absolute top-2 left-1/2 z-10 -translate-x-1/2 rounded-full bg-[#0a85ff] px-4 py-1 text-[11px] font-semibold">
-                  고객 픽
-                </span>
-              ) : null}
-              <PosterPlaceholder
-                label={`포스터 ${option.position === 1 ? "A" : "B"}`}
-                variant={option.position === 1 ? "a" : "b"}
-                imageSrc={option.assetUrl}
-                className="h-[240px]"
-              />
-              <p className="mt-2 text-center text-2xl font-semibold">
-                {option.percentage}%
-              </p>
-              <p className="text-center text-xs text-[#adadb8]">
-                {option.voteCount}표
-              </p>
+        <article className="relative mt-3 min-h-[322px] max-w-[640px] rounded-[18px] border border-[#3d3d42] bg-[#1c1c1f] p-4">
+          {winner ? (
+            <div className="absolute top-[58px] left-6 w-[196px]">
+              <span className="mx-auto flex h-9 w-fit min-w-[84px] items-center justify-center rounded-full bg-[#0a85ff] px-4 text-base font-semibold">
+                {winnerLabel.replace("포스터 ", "")}안
+              </span>
+              <div className="relative mt-3 flex h-[200px] w-[196px] items-center justify-center rounded-[12px] bg-[#29292e]">
+                <PosterPlaceholder
+                  label={winnerLabel}
+                  variant={winner.position === 1 ? "a" : "b"}
+                  imageSrc={winner.assetUrl}
+                  className="h-[196px] w-[165px] border-0 rounded-[10px]"
+                />
+                <p className="absolute inset-x-0 bottom-4 text-center text-[36px] font-semibold leading-none text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
+                  {winner.percentage}%
+                </p>
+              </div>
             </div>
-          ))}
+          ) : null}
+
+          {loser ? (
+            <div className="absolute top-[190px] right-5 w-[84px] text-center">
+              <p className="text-xs text-[#adadb8]">
+                포스터 {loser.position === 1 ? "A" : "B"}
+              </p>
+              <PosterPlaceholder
+                label={`포스터 ${loser.position === 1 ? "A" : "B"}`}
+                variant={loser.position === 1 ? "a" : "b"}
+                imageSrc={loser.assetUrl}
+                compact
+                className="mt-2 h-[78px] w-[84px] border-0 rounded-[10px]"
+              />
+              <p className="mt-1 text-xs text-white">{loser.percentage}%</p>
+            </div>
+          ) : null}
         </article>
 
-        {winner?.assetUrl ? (
-          <a
-            href={winner.assetUrl}
-            download
-            target="_blank"
-            rel="noreferrer"
-            className="mt-5 flex h-12 max-w-none items-center justify-center gap-2 rounded-[14px] bg-[#26262b] text-[15px] font-semibold transition-colors hover:bg-[#313138]"
-          >
-            <DownloadIcon className="size-4" aria-hidden="true" />
-            고객 픽 포스터 다운로드
-          </a>
-        ) : null}
       </section>
     </OwnerShell>
   )

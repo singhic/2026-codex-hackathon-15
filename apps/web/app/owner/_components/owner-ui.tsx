@@ -1,9 +1,6 @@
 import {
   BarChart3Icon,
   ChevronLeftIcon,
-  FileTextIcon,
-  HomeIcon,
-  SettingsIcon,
   BadgeCheckIcon,
   TestTubesIcon,
 } from "lucide-react"
@@ -12,7 +9,7 @@ import Image from "next/image"
 
 type OwnerShellProps = {
   children: React.ReactNode
-  activeTab?: "dashboard" | "tests"
+  activeTab?: "dashboard" | "tests" | "picks"
   backHref?: string
   headerTitle?: string
   headerAction?: React.ReactNode
@@ -34,55 +31,21 @@ export function OwnerShell({
   return (
     <main className="min-h-svh overflow-x-hidden bg-[#303033] text-white">
       <div className="mx-auto flex min-h-svh w-full max-w-[390px] bg-black md:max-w-none md:bg-[#101014]">
-        <aside className="hidden w-64 shrink-0 flex-col border-r border-white/10 bg-[#141417] px-6 py-8 md:flex">
-          <Link href={`/owner/dashboard${storeQuery}`} className="block">
-            <div className="flex items-center gap-2">
-              <p className="text-xl font-black tracking-tight">THE PICK</p>
-              <span className="rounded-full bg-[#1a334f] px-2 py-1 text-[10px] font-semibold text-[#80c4ff]">
-                사장님
-              </span>
-            </div>
-            <p className="mt-2 text-xs text-[#adadb8]">
-              포스터 테스트 스튜디오
-            </p>
-          </Link>
-
-          <nav aria-label="사장님 데스크톱 메뉴" className="mt-12 space-y-2">
-            <DesktopNavLink
-              href={`/owner/dashboard${storeQuery}`}
-              active={activeTab === "dashboard"}
-              icon={<HomeIcon className="size-5" aria-hidden="true" />}
-            >
-              진행 중
-            </DesktopNavLink>
-            <DesktopNavLink
-              href={`/owner/tests${storeQuery}`}
-              active={activeTab === "tests"}
-              icon={<FileTextIcon className="size-5" aria-hidden="true" />}
-            >
-              완료 리포트
-            </DesktopNavLink>
-          </nav>
-
-          <div className="mt-auto border-t border-white/10 pt-5">
-            <Link
-              href="/owner/wallet"
-              className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-[#adadb8] transition-colors hover:bg-white/5 hover:text-white"
-            >
-              <BadgeCheckIcon className="size-5" aria-hidden="true" />
-              크레딧 내역
-            </Link>
-            <Link
-              href="/owner/onboarding"
-              className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-[#adadb8] transition-colors hover:bg-white/5 hover:text-white"
-            >
-              <SettingsIcon className="size-5" aria-hidden="true" />
-              매장 설정
-            </Link>
-          </div>
-        </aside>
-
         <div className="flex min-w-0 flex-1 flex-col">
+          <div className="hidden items-center justify-between border-b border-white/10 bg-[#141417] px-[clamp(24px,5vw,96px)] py-5 md:flex">
+            <Link href={`/owner/dashboard${storeQuery}`} aria-label="더픽 홈">
+              <PickLogo />
+            </Link>
+            <div className="flex items-center gap-5 text-sm text-[#adadb8]">
+              <Link href="/owner/wallet" className="hover:text-white">
+                크레딧 내역
+              </Link>
+              <Link href="/owner/onboarding" className="hover:text-white">
+                매장 설정
+              </Link>
+            </div>
+          </div>
+
           {backHref || headerTitle ? (
             <header className="flex min-h-[56px] items-center gap-2 px-5 pt-2 md:mx-auto md:w-full md:max-w-none md:px-[clamp(40px,5vw,96px)] md:pt-8">
               {backHref ? (
@@ -106,18 +69,18 @@ export function OwnerShell({
           {showTabs ? (
             <nav
               aria-label="사장님 메뉴"
-              className="sticky bottom-0 z-20 grid h-[72px] shrink-0 grid-cols-2 border-t border-white/10 bg-[#141417]/95 px-16 pt-3 pb-5 backdrop-blur md:hidden"
+              className="sticky bottom-0 z-20 flex h-[72px] shrink-0 items-start justify-center gap-24 border-t border-white/10 bg-[#141417]/95 pt-3 pb-5 backdrop-blur md:h-[84px] md:gap-[clamp(96px,18vw,240px)] md:pt-4"
             >
               <MobileNavLink
-                href={`/owner/dashboard${storeQuery}`}
-                active={activeTab === "dashboard"}
+                href={`/owner/tests${storeQuery}`}
+                active={activeTab === "dashboard" || activeTab === "tests"}
                 icon={<TestTubesIcon className="size-5" aria-hidden="true" />}
               >
                 테스트
               </MobileNavLink>
               <MobileNavLink
-                href={`/owner/tests${storeQuery}`}
-                active={activeTab === "tests"}
+                href={`/owner/picks${storeQuery}`}
+                active={activeTab === "picks"}
                 icon={<BadgeCheckIcon className="size-5" aria-hidden="true" />}
               >
                 픽
@@ -127,32 +90,6 @@ export function OwnerShell({
         </div>
       </div>
     </main>
-  )
-}
-
-function DesktopNavLink({
-  children,
-  href,
-  icon,
-  active,
-}: {
-  children: React.ReactNode
-  href: string
-  icon: React.ReactNode
-  active: boolean
-}) {
-  return (
-    <Link
-      href={href}
-      className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm transition-colors ${
-        active
-          ? "bg-[#0a85ff]/15 font-semibold text-[#2b9bff]"
-          : "text-[#adadb8] hover:bg-white/5 hover:text-white"
-      }`}
-    >
-      {icon}
-      {children}
-    </Link>
   )
 }
 
@@ -170,6 +107,7 @@ function MobileNavLink({
   return (
     <Link
       href={href}
+      aria-current={active ? "page" : undefined}
       className={`flex flex-col items-center gap-1 text-xs transition-colors ${
         active ? "font-semibold text-[#0091ff]" : "text-[#adadb8]"
       }`}
@@ -177,6 +115,20 @@ function MobileNavLink({
       {icon}
       {children}
     </Link>
+  )
+}
+
+export function PickLogo() {
+  return (
+    <span className="inline-flex items-center gap-2">
+      <span className="relative inline-flex size-7 items-center justify-center rounded-full bg-[#0a85ff] text-black">
+        <span className="absolute size-2 rounded-full bg-black" />
+        <span className="absolute top-3 left-3 h-2.5 w-1.5 rotate-45 rounded-[2px] border-r-2 border-b-2 border-black" />
+      </span>
+      <span className="text-xl font-black tracking-[-0.04em] text-white">
+        THE PICK
+      </span>
+    </span>
   )
 }
 
@@ -225,6 +177,10 @@ export function PosterPlaceholder({
   imageSrc?: string
   imageAlt?: string
 }) {
+  const resolvedImageSrc =
+    imageSrc ??
+    (variant === "a" ? "/posters/strawberry-a.png" : "/posters/strawberry-b.png")
+
   return (
     <div
       role="img"
@@ -237,13 +193,13 @@ export function PosterPlaceholder({
           : "bg-[linear-gradient(145deg,#3b302d,#292426)]"
       } ${className}`}
     >
-      {imageSrc ? (
+      {resolvedImageSrc ? (
         <Image
-          src={imageSrc}
+          src={resolvedImageSrc}
           alt={imageAlt ?? label}
           fill
           sizes={compact ? "84px" : "(min-width: 768px) 360px, 50vw"}
-          className="object-contain"
+          className="object-cover object-center"
         />
       ) : (
         <span>{label}</span>
