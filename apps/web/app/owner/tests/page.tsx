@@ -7,7 +7,7 @@ import { activeTest, completedTest } from "../_components/mock-data"
 export default function OwnerTestsPage() {
   return (
     <OwnerShell activeTab="tests">
-      <section className="flex flex-1 flex-col px-5 pt-7">
+      <section className="flex flex-1 flex-col px-5 pt-7 sm:px-8 md:mx-auto md:w-full md:max-w-[1180px] md:px-10 md:pt-12">
         <div className="flex items-end justify-between gap-4">
           <div>
             <p className="text-sm text-[#adadb8]">사장님 운영 공간</p>
@@ -22,10 +22,10 @@ export default function OwnerTestsPage() {
           </Link>
         </div>
 
-        <div className="mt-8 space-y-4 pb-8">
+        <div className="mt-8 grid gap-4 pb-8 md:grid-cols-2 md:gap-5">
           <Link
             href={`/owner/tests/${activeTest.id}`}
-            className="block rounded-[18px] border border-[#3d3d42] bg-[#1c1c1f] p-4 transition-colors hover:border-[#0a85ff]"
+            className="block rounded-[18px] border border-[#3d3d42] bg-[#1c1c1f] p-4 transition-colors hover:border-[#0a85ff] md:p-6"
           >
             <div className="flex items-center justify-between gap-3">
               <span className="rounded-full bg-[#0a85ff] px-2.5 py-1 text-[11px] font-semibold">
@@ -48,7 +48,7 @@ export default function OwnerTestsPage() {
 
           <Link
             href={`/owner/tests/${completedTest.id}/results`}
-            className="block rounded-[18px] border border-[#3d3d42] bg-[#1c1c1f] p-4 transition-colors hover:border-[#0a85ff]"
+            className="block rounded-[18px] border border-[#3d3d42] bg-[#1c1c1f] p-4 transition-colors hover:border-[#0a85ff] md:p-6"
           >
             <div className="flex items-center justify-between gap-3">
               <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#adadb8]">

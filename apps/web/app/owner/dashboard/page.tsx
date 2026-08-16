@@ -14,16 +14,21 @@ export default function OwnerDashboardPage() {
 
   return (
     <OwnerShell activeTab="dashboard">
-      <section className="flex min-h-[700px] flex-1 flex-col px-5 pt-6">
+      <section className="flex min-h-[700px] flex-1 flex-col px-5 pt-6 sm:px-8 md:mx-auto md:w-full md:max-w-[1180px] md:px-10 md:pt-12">
         <p className="text-xl font-black tracking-tight">THE PICK</p>
-        <h1 className="mt-6 text-[28px] leading-tight font-semibold">
-          진행 중
-        </h1>
-        <p className="mt-2 text-sm text-[#adadb8]">
-          고객 반응을 수집하고 있는 테스트예요.
-        </p>
+        <div className="mt-6 flex items-end justify-between gap-6">
+          <div>
+            <h1 className="text-[28px] leading-tight font-semibold">진행 중</h1>
+            <p className="mt-2 text-sm text-[#adadb8]">
+              고객 반응을 수집하고 있는 테스트예요.
+            </p>
+          </div>
+          <span className="hidden rounded-full border border-[#3d3d42] px-4 py-2 text-sm text-[#adadb8] md:inline-flex">
+            민지의 딸기 카페
+          </span>
+        </div>
 
-        <article className="mt-9 rounded-[18px] border border-[#3d3d42] bg-[#1c1c1f] p-4">
+        <article className="mt-9 rounded-[18px] border border-[#3d3d42] bg-[#1c1c1f] p-4 md:mt-10 md:min-h-[352px] md:max-w-5xl md:p-6">
           <div className="flex items-start justify-between gap-3">
             <span className="rounded-full bg-[#0a85ff] px-2.5 py-1 text-[11px] font-semibold">
               진행 중
@@ -45,7 +50,7 @@ export default function OwnerDashboardPage() {
           <div className="mt-3">
             <ProgressBar value={progress} />
           </div>
-          <div className="mt-12 grid grid-cols-3 gap-2">
+          <div className="mt-12 grid grid-cols-3 gap-2 md:mt-14 md:max-w-[520px] md:gap-3">
             <MetricCard label="노출 수" value={activeTest.impressions} />
             <MetricCard label="투표 수" value={`${activeTest.votes}명`} />
             <MetricCard label="상세 보기" value={activeTest.detailViews} />
@@ -54,7 +59,7 @@ export default function OwnerDashboardPage() {
 
         <Link
           href="/owner/tests/new"
-          className="mt-auto mb-5 flex h-[52px] items-center justify-center gap-2 rounded-2xl bg-[#0a85ff] text-[17px] font-semibold transition-colors hover:bg-[#0a85ff]/90"
+          className="mt-auto mb-5 flex h-[52px] items-center justify-center gap-2 rounded-2xl bg-[#0a85ff] text-[17px] font-semibold transition-colors hover:bg-[#0a85ff]/90 md:mb-8 md:w-fit md:min-w-[260px] md:self-end md:px-8"
         >
           A/B 테스트 추가하기
           <ArrowRightIcon className="size-5" aria-hidden="true" />

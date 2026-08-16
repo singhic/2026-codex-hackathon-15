@@ -79,28 +79,57 @@ function PageShell({
   logo?: boolean
 }) {
   return (
-    <main className="min-h-svh bg-black text-white">
-      <div className="mx-auto flex min-h-svh w-full max-w-[390px] flex-col overflow-hidden px-5 py-7">
-        <header className="flex min-h-8 items-center gap-2">
-          {onBack ? (
-            <button
-              type="button"
-              aria-label="이전 화면"
-              className="inline-flex size-6 shrink-0 items-center justify-center text-white transition-opacity hover:opacity-70"
-              onClick={onBack}
-            >
-              <ChevronLeftIcon className="size-6" aria-hidden="true" />
-            </button>
-          ) : null}
-          {logo ? (
-            <Link href="/" className="text-xl font-semibold tracking-tight">
-              더픽
-            </Link>
-          ) : (
-            <p className="text-xl font-semibold tracking-tight">{title}</p>
-          )}
-        </header>
-        {children}
+    <main className="min-h-svh bg-black text-white md:bg-[#303033] md:px-8 md:py-10">
+      <div className="mx-auto flex min-h-svh w-full max-w-[390px] flex-col overflow-hidden px-5 py-7 md:grid md:min-h-[760px] md:max-w-[1200px] md:grid-cols-[minmax(0,1fr)_minmax(390px,32vw)] md:gap-10 md:rounded-[28px] md:bg-black md:px-12 md:py-12">
+        <aside className="hidden flex-col justify-center md:flex">
+          <p className="text-sm font-semibold tracking-[0.24em] text-[#adadb8] uppercase">
+            THE PICK
+          </p>
+          <h1 className="mt-7 text-5xl leading-[1.12] font-semibold tracking-tight">
+            고객의 선택으로
+            <br />더 확신 있게 홍보하세요.
+          </h1>
+          <p className="mt-6 max-w-lg text-base leading-7 text-[#adadb8]">
+            두 가지 포스터를 등록하고 실제 고객의 선택을 확인해 보세요.
+          </p>
+          <div className="mt-10 grid max-w-lg grid-cols-2 gap-3">
+            <div className="rounded-2xl border border-[#3d3d42] bg-[#1c1c1f] p-4">
+              <p className="text-sm font-semibold">사장님</p>
+              <p className="mt-2 text-xs leading-5 text-[#adadb8]">
+                홍보 포스터를 비교하고 더 나은 시안을 선택해요.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-[#3d3d42] bg-[#1c1c1f] p-4">
+              <p className="text-sm font-semibold">손님</p>
+              <p className="mt-2 text-xs leading-5 text-[#adadb8]">
+                포스터를 고르고 참여 리워드를 받아요.
+              </p>
+            </div>
+          </div>
+        </aside>
+
+        <div className="flex min-h-0 flex-1 flex-col md:min-h-[664px] md:rounded-[18px] md:border md:border-[#3d3d42] md:bg-black md:px-5 md:py-7">
+          <header className="flex min-h-8 items-center gap-2">
+            {onBack ? (
+              <button
+                type="button"
+                aria-label="이전 화면"
+                className="inline-flex size-6 shrink-0 items-center justify-center text-white transition-opacity hover:opacity-70"
+                onClick={onBack}
+              >
+                <ChevronLeftIcon className="size-6" aria-hidden="true" />
+              </button>
+            ) : null}
+            {logo ? (
+              <Link href="/" className="text-xl font-semibold tracking-tight">
+                더픽
+              </Link>
+            ) : (
+              <p className="text-xl font-semibold tracking-tight">{title}</p>
+            )}
+          </header>
+          {children}
+        </div>
       </div>
     </main>
   )
@@ -658,8 +687,10 @@ function CompletionStep({
         )}
 
         <div className="mt-auto space-y-4 pt-10">
-          <PrimaryButton render={<Link href="/" />}>
-            {isOwner ? "첫 A/B 테스트 만들기" : "첫 투표 보러 가기"}
+          <PrimaryButton
+            render={<Link href={isOwner ? "/owner/dashboard" : "/me"} />}
+          >
+            {isOwner ? "홈 대시보드로 이동" : "내 투표 홈으로 이동"}
             <ArrowRightIcon aria-hidden="true" />
           </PrimaryButton>
           <button

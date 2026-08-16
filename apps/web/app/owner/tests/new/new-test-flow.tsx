@@ -65,7 +65,7 @@ function PosterUploadCard({
     <div className="min-w-0 flex-1">
       <button
         type="button"
-        className="group relative flex h-[230px] w-full flex-col items-center justify-center overflow-hidden rounded-xl border border-[#3b3b40] bg-[#29292e] text-sm text-[#adadb8] transition-colors hover:border-[#0a85ff]"
+        className="group relative flex h-[230px] w-full flex-col items-center justify-center overflow-hidden rounded-xl border border-[#3b3b40] bg-[#29292e] text-sm text-[#adadb8] transition-colors hover:border-[#0a85ff] md:h-[300px]"
         onClick={() => inputRef.current?.click()}
       >
         {fileName ? (
@@ -126,7 +126,7 @@ function PosterStep({
 }) {
   return (
     <form
-      className="flex min-h-[calc(100svh-56px)] flex-1 flex-col px-5 pt-5"
+      className="flex min-h-[calc(100svh-56px)] flex-1 flex-col px-5 pt-5 sm:px-8 md:mx-auto md:w-full md:max-w-3xl md:px-8 md:pt-10"
       onSubmit={(event) => {
         event.preventDefault()
         onNext()
@@ -198,7 +198,7 @@ function ConditionStep({
   const totalPrice = selectedPackage.price * activeTest.days
 
   return (
-    <section className="flex min-h-[calc(100svh-56px)] flex-1 flex-col px-5 pt-5">
+    <section className="flex min-h-[calc(100svh-56px)] flex-1 flex-col px-5 pt-5 sm:px-8 md:mx-auto md:w-full md:max-w-3xl md:px-8 md:pt-10">
       <h1 className="text-xl font-semibold">하루 최소 보장 투표 수</h1>
       <p className="mt-1 text-[13px] text-[#adadb8]">
         설정한 하루 최소 인원만큼 투표를 보장해 드려요.
@@ -322,7 +322,7 @@ function ConfirmStep({
         role="dialog"
         aria-modal="true"
         aria-labelledby="confirm-title"
-        className="fixed inset-x-0 bottom-0 z-30 mx-auto min-h-[562px] w-full max-w-[390px] rounded-t-[22px] bg-[#1c1c1f] px-5 pt-3"
+        className="fixed inset-x-0 bottom-0 z-30 mx-auto min-h-[562px] w-full max-w-[390px] rounded-t-[22px] bg-[#1c1c1f] px-5 pt-3 md:max-w-[560px] md:px-8"
       >
         <div className="mx-auto h-1.5 w-[70px] rounded-full bg-[#adadb8]" />
         <h2 id="confirm-title" className="mt-7 text-[22px] font-semibold">
