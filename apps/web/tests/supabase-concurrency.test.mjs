@@ -142,7 +142,7 @@ function authenticatedClient(userId) {
     {
       aud: "authenticated",
       exp: Math.floor(Date.now() / 1000) + 3600,
-      iat: Math.floor(Date.now() / 1000),
+      iat: Math.floor(Date.now() / 1000) - 30,
       sub: userId,
       role: "authenticated",
       aal: "aal1",

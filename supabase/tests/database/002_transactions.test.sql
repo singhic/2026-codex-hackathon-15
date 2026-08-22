@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(24);
+select plan(25);
 
 insert into auth.users (
   id,
@@ -91,9 +91,18 @@ select set_config(
 );
 
 set local role authenticated;
+select throws_ok(
+  format(
+    $$select api.create_test_draft(%L::uuid, '잘못된 리워드', '서버 계약과 다른 리워드', now(), now() + interval '1 day', 30::smallint, 10::smallint)$$,
+    current_setting('test.store_id')
+  ),
+  'P0001',
+  'VALIDATION_FAILED',
+  'draft reward must match the server package catalog'
+);
 select lives_ok(
   format(
-    $$select api.create_test_draft(%L::uuid, 'A/B 포스터 테스트', '어느 포스터가 더 좋은가요?', now() - interval '1 hour', now() + interval '2 days', 30::smallint, 10::smallint)$$,
+    $$select api.create_test_draft(%L::uuid, 'A/B 포스터 테스트', '어느 포스터가 더 좋은가요?', now() - interval '1 hour', now() + interval '2 days', 30::smallint, 30::smallint)$$,
     current_setting('test.store_id')
   ),
   'owner creates a two-option draft'
@@ -249,7 +258,7 @@ select is(
 );
 select is(
   (select balance from private.reward_point_accounts where user_id = '20000000-0000-4000-8000-000000000002'),
-  10::bigint,
+  30::bigint,
   'customer reward points are credited separately'
 );
 select is(
@@ -285,7 +294,7 @@ select is(
 );
 select is(
   (select balance from private.reward_point_accounts where user_id = '20000000-0000-4000-8000-000000000002'),
-  10::bigint,
+  30::bigint,
   'replaying a vote does not duplicate the reward'
 );
 select is(

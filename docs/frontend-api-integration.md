@@ -221,6 +221,7 @@ type Catalog = {
   pricingPackages: Array<{
     targetVotes: 30 | 50 | 70 | 100
     priceCredits: number
+    rewardPoints: number
   }>
 }
 ```
@@ -293,7 +294,7 @@ type OwnerDashboard = {
   "startsAt": "2026-08-20T00:00:00.000Z",
   "endsAt": "2026-08-23T00:00:00.000Z",
   "targetVotes": 100,
-  "rewardPoints": 10
+  "rewardPoints": 30
 }
 ```
 
@@ -303,8 +304,8 @@ type OwnerDashboard = {
 
 - 제목 1~~120자, 질문 1~~300자
 - `targetVotes`: `30 | 50 | 70 | 100`
-- `rewardPoints`: 0~30 정수
-- 운영기간: 최소 1일, 최대 30일
+- `rewardPoints`: 선택한 카탈로그 패키지의 `rewardPoints`와 일치해야 함
+- 운영기간: 종료가 시작보다 늦어야 하며 최대 30일
 - 날짜는 ISO 8601 문자열로 전송
 - 수정은 `draft` 상태에서만 가능
 
@@ -413,9 +414,12 @@ type StartTestResult = {
 type TestProgress = {
   id: UUID
   storeId: UUID
+  title: string
+  question: string
   status: TestStatus
   voteCount: number
   targetVotes: number
+  rewardPoints: number
   detailViews: number
   startsAt: ISODateTime
   endsAt: ISODateTime
@@ -644,8 +648,8 @@ pnpm format:check
 
 ## 10. 알려진 제한과 후속 범위
 
-- 로그인/callback/proxy UI 코드는 현재 워크트리에 아직 없습니다.
-- 운영자 크레딧 구매·관리자 지급 API가 없어 신규 운영자는 잔액 0으로 시작합니다.
+- 운영자 크레딧 구매 API는 아직 없으며 신규 운영자는 잔액 0으로 시작합니다.
+- 데모 환경에서는 `pnpm demo:grant-credit -- --email <운영자 이메일> --amount 10000`으로 로컬 크레딧을 지급합니다. 연결된 프로젝트는 명시적으로 `--linked`를 추가합니다.
 - 실제 결제, 포인트 사용·환전, 사업자 인증, 알림, 계정 삭제는 후속 범위입니다.
 - 포스터 교체 시 이전 객체 자동 정리는 아직 구현되지 않았습니다.
 - Edge Function은 배포하지 않습니다. 현재 기능은 Next.js BFF와 DB RPC로 완결됩니다.

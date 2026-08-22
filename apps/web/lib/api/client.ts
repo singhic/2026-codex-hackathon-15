@@ -93,6 +93,7 @@ export type Catalog = {
   pricingPackages: Array<{
     targetVotes: 30 | 50 | 70 | 100
     priceCredits: number
+    rewardPoints: number
   }>
 }
 
@@ -132,9 +133,12 @@ export type CreatedDraft = {
 export type TestProgress = {
   id: UUID
   storeId: UUID
+  title: string
+  question: string
   status: TestStatus
   voteCount: number
   targetVotes: number
+  rewardPoints: number
   detailViews: number
   startsAt: ISODateTime
   endsAt: ISODateTime

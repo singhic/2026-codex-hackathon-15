@@ -402,18 +402,21 @@ export type Database = {
         Row: {
           is_active: boolean
           price_credits: number
+          reward_points: number
           target_votes: number
           updated_at: string
         }
         Insert: {
           is_active?: boolean
           price_credits: number
+          reward_points?: number
           target_votes: number
           updated_at?: string
         }
         Update: {
           is_active?: boolean
           price_credits?: number
+          reward_points?: number
           target_votes?: number
           updated_at?: string
         }

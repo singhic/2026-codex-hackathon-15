@@ -33,8 +33,8 @@ export const completedTest = {
 }
 
 export const votePackages = [
-  { votes: 30, price: 5000 },
-  { votes: 50, price: 7000 },
-  { votes: 70, price: 8000 },
-  { votes: 100, price: 10000 },
+  { votes: 30, price: 5000, rewardPoints: 30 },
+  { votes: 50, price: 7000, rewardPoints: 30 },
+  { votes: 70, price: 8000, rewardPoints: 30 },
+  { votes: 100, price: 10000, rewardPoints: 30 },
 ]
