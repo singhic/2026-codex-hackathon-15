@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(26);
+select plan(28);
 
 select has_schema('api', 'api schema exists');
 select has_schema('private', 'private schema exists');
@@ -26,6 +26,12 @@ select has_function(
   'list_available_tests',
   array[]::text[],
   'customer discovery RPC exists'
+);
+select has_function(
+  'api',
+  'healthcheck',
+  array[]::text[],
+  'readiness healthcheck RPC exists'
 );
 select has_function(
   'api',
@@ -98,6 +104,10 @@ select is(
 select ok(
   not has_function_privilege('anon', 'api.start_test(uuid,uuid)', 'execute'),
   'anonymous users cannot execute owner RPCs'
+);
+select ok(
+  has_function_privilege('anon', 'api.healthcheck()', 'execute'),
+  'anonymous readiness checks can execute only the healthcheck RPC'
 );
 select ok(
   has_function_privilege('authenticated', 'api.start_test(uuid,uuid)', 'execute'),

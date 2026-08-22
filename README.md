@@ -77,6 +77,7 @@ supabase/tests/integration   동시성 테스트용 로컬 fixture
 주요 공개 계약은 다음과 같습니다. 모든 도메인 API는 로그인 세션을 요구합니다.
 
 ```text
+GET      /api/health
 GET|POST /api/owner/stores
 GET|POST /api/owner/stores/[storeId]/tests
 PATCH    /api/owner/stores/[storeId]/tests/[testId]
@@ -92,6 +93,10 @@ GET|POST /api/me/consents
 GET      /api/me/rewards
 GET      /api/owner/wallet
 ```
+
+`GET /api/health`는 환경변수 존재 여부뿐 아니라 제한된 익명
+`api.healthcheck()` RPC를 호출해 실제 Supabase DB 연결까지 확인합니다. 연결
+실패 또는 3초 초과 시 HTTP 503과 `status: "degraded"`를 반환합니다.
 
 테스트 시작·예약 취소·투표 요청에는 클라이언트가 만든 UUID `idempotencyKey`가 필요합니다. 테스트 포스터는 비공개 `test-posters` 버킷에 직접 업로드한 뒤 option endpoint로 경로를 확정하며, 조회 시 사용자 세션으로 10분짜리 signed URL을 발급합니다.
 
