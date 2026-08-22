@@ -17,8 +17,10 @@
     "supabase:lint": "supabase db lint --local --schema api,public,private --level warning --fail-on warning",
     "supabase:test": "supabase test db --local supabase/tests/database",
     "supabase:test:integration": "node --test apps/web/tests/supabase-concurrency.test.mjs",
+    "test:unit": "node --test apps/web/tests/test-period.test.ts apps/web/tests/health.test.ts",
     "supabase:types": "supabase gen types typescript --local --schema api --schema public --schema private > apps/web/lib/supabase/database.types.ts",
-    "db:check": "pnpm supabase:reset && pnpm supabase:lint && pnpm supabase:test && pnpm supabase:test:integration"
+    "db:check": "pnpm supabase:reset && pnpm supabase:lint && pnpm supabase:test && pnpm supabase:test:integration",
+    "demo:grant-credit": "node scripts/grant-demo-credit.mjs"
   },
   "devDependencies": {
     "@workspace/eslint-config": "workspace:*",

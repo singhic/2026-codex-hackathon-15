@@ -93,6 +93,7 @@ export type Catalog = {
   pricingPackages: Array<{
     targetVotes: 30 | 50 | 70 | 100
     priceCredits: number
+    rewardPoints: number
   }>
 }
 
@@ -132,9 +133,12 @@ export type CreatedDraft = {
 export type TestProgress = {
   id: UUID
   storeId: UUID
+  title: string
+  question: string
   status: TestStatus
   voteCount: number
   targetVotes: number
+  rewardPoints: number
   detailViews: number
   startsAt: ISODateTime
   endsAt: ISODateTime
@@ -154,6 +158,7 @@ export type TestResult = {
   status: TestStatus
   voteCount: number
   targetVotes: number
+  detailViews: number
   options: Array<{
     id: UUID
     position: 1 | 2
@@ -194,6 +199,25 @@ export type VoteContext = {
     position: 1 | 2
     assetUrl?: string
     assetPath?: null
+  }>
+}
+
+export type AvailableTest = {
+  id: UUID
+  slug: string
+  storeName: string
+  categoryName: string
+  regionCode: string
+  title: string
+  question: string
+  rewardPoints: number
+  voteCount: number
+  targetVotes: number
+  endsAt: ISODateTime
+  options: Array<{
+    id: UUID
+    position: 1 | 2
+    assetUrl: string
   }>
 }
 

@@ -221,6 +221,7 @@ type Catalog = {
   pricingPackages: Array<{
     targetVotes: 30 | 50 | 70 | 100
     priceCredits: number
+    rewardPoints: number
   }>
 }
 ```
@@ -293,7 +294,7 @@ type OwnerDashboard = {
   "startsAt": "2026-08-20T00:00:00.000Z",
   "endsAt": "2026-08-23T00:00:00.000Z",
   "targetVotes": 100,
-  "rewardPoints": 10
+  "rewardPoints": 30
 }
 ```
 
@@ -303,8 +304,8 @@ type OwnerDashboard = {
 
 - 제목 1~~120자, 질문 1~~300자
 - `targetVotes`: `30 | 50 | 70 | 100`
-- `rewardPoints`: 0~30 정수
-- 운영기간: 최소 1일, 최대 30일
+- `rewardPoints`: 선택한 카탈로그 패키지의 `rewardPoints`와 일치해야 함
+- 운영기간: 종료가 시작보다 늦어야 하며 최대 30일
 - 날짜는 ISO 8601 문자열로 전송
 - 수정은 `draft` 상태에서만 가능
 
@@ -413,9 +414,12 @@ type StartTestResult = {
 type TestProgress = {
   id: UUID
   storeId: UUID
+  title: string
+  question: string
   status: TestStatus
   voteCount: number
   targetVotes: number
+  rewardPoints: number
   detailViews: number
   startsAt: ISODateTime
   endsAt: ISODateTime
@@ -475,6 +479,35 @@ type OwnerWallet = {
 최신 50개 원장만 반환합니다. 충전·결제 UI와 API는 현재 구현 범위가 아닙니다.
 
 ## 6. 투표 고객 API
+
+### 참여 가능한 테스트 탐색
+
+`GET /api/votes/available`
+
+현재 고객이 참여할 수 있는 활성 테스트를 최대 20개 반환합니다. 본인 매장 테스트와 이미 투표한 테스트는 제외하고, 고객이 활동 지역을 설정했다면 같은 지역만 보여줍니다. 관심 업종과 마감 시각을 기준으로 정렬합니다.
+
+```ts
+type AvailableTest = {
+  id: UUID
+  slug: string
+  storeName: string
+  categoryName: string
+  regionCode: string
+  title: string
+  question: string
+  rewardPoints: number
+  voteCount: number
+  targetVotes: number
+  endsAt: ISODateTime
+  options: Array<{
+    id: UUID
+    position: 1 | 2
+    assetUrl: string
+  }>
+}
+```
+
+포스터 URL은 다른 조회 API와 마찬가지로 10분짜리 signed URL이며 고객 홈에 영구 저장하지 않습니다.
 
 ### 투표 화면 조회
 
@@ -644,9 +677,22 @@ pnpm format:check
 
 ## 10. 알려진 제한과 후속 범위
 
-- 로그인/callback/proxy UI 코드는 현재 워크트리에 아직 없습니다.
-- 운영자 크레딧 구매·관리자 지급 API가 없어 신규 운영자는 잔액 0으로 시작합니다.
+- 운영자 크레딧 구매 API는 아직 없으며 신규 운영자는 잔액 0으로 시작합니다.
+- 데모 환경에서는 `pnpm demo:grant-credit -- --email <운영자 이메일> --amount 10000`으로 로컬 크레딧을 지급합니다. 연결된 프로젝트는 명시적으로 `--linked`를 추가합니다.
+- `/api/health`는 제한된 익명 RPC로 실제 DB 연결을 검사하며, 설정 누락·연결 실패·3초 초과 시 503을 반환합니다.
 - 실제 결제, 포인트 사용·환전, 사업자 인증, 알림, 계정 삭제는 후속 범위입니다.
 - 포스터 교체 시 이전 객체 자동 정리는 아직 구현되지 않았습니다.
 - Edge Function은 배포하지 않습니다. 현재 기능은 Next.js BFF와 DB RPC로 완결됩니다.
 - 외부 결제 webhook, SMS/메일/푸시, 보고서 파일 생성이 확정될 때만 Edge Function을 추가합니다.
+
+### 프로덕션 연동 전에 확정할 결정
+
+| 영역 | 먼저 확정할 계약 | 이유 |
+| --- | --- | --- |
+| 크레딧 결제 | 결제사, 충전 상품, 환불·취소 규칙, webhook 서명 방식 | 결제 승인과 내부 크레딧 지급을 하나의 멱등 트랜잭션으로 설계해야 합니다. |
+| 사업자 인증 | 국세청 조회 대행사 또는 수동 심사, 저장할 증빙 범위 | 사업자번호와 증빙은 일반 프로필보다 높은 보호·보존 정책이 필요합니다. |
+| 알림 | 인앱만 제공할지, 이메일·SMS·웹 푸시까지 제공할지 | 채널별 동의, 발송 실패, 수신 거부 계약이 다릅니다. |
+| 계정 삭제 | 금융·투표 원장 보존 기간과 익명화 기준 | 현재 원장은 감사 가능성을 위해 사용자 참조를 `restrict`하며 즉시 물리 삭제와 충돌합니다. |
+
+위 네 계약이 확정되기 전에는 데모 크레딧 CLI와 실제 원장을 연결하는 방식으로
+운영하고, UI에서 실결제나 즉시 탈퇴가 가능한 것처럼 표시하지 않습니다.

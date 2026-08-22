@@ -42,6 +42,16 @@ after(() => {
   }
 })
 
+test("익명 readiness RPC는 데이터 노출 없이 DB 연결을 확인한다", async () => {
+  const client = createClient(local.API_URL, local.ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  })
+  const result = await client.schema("api").rpc("healthcheck")
+
+  assert.equal(result.error, null)
+  assert.equal(result.data, true)
+})
+
 test("동일 시작 멱등 키의 동시 요청은 크레딧을 한 번만 차감한다", async () => {
   const client = authenticatedClient(OWNER)
   const results = await Promise.all(
@@ -142,7 +152,7 @@ function authenticatedClient(userId) {
     {
       aud: "authenticated",
       exp: Math.floor(Date.now() / 1000) + 3600,
-      iat: Math.floor(Date.now() / 1000),
+      iat: Math.floor(Date.now() / 1000) - 5 * 60,
       sub: userId,
       role: "authenticated",
       aal: "aal1",

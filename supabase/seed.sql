@@ -10,14 +10,15 @@ on conflict (slug) do update
 set name = excluded.name,
     sort_order = excluded.sort_order;
 
-insert into public.pricing_packages (target_votes, price_credits)
+insert into public.pricing_packages (target_votes, price_credits, reward_points)
 values
-  (30, 5000),
-  (50, 7000),
-  (70, 8000),
-  (100, 10000)
+  (30, 5000, 30),
+  (50, 7000, 30),
+  (70, 8000, 30),
+  (100, 10000, 30)
 on conflict (target_votes) do update
-set price_credits = excluded.price_credits;
+set price_credits = excluded.price_credits,
+    reward_points = excluded.reward_points;
 
 insert into public.legal_documents (document_key, version, title, is_required, effective_at)
 values
@@ -26,4 +27,3 @@ values
   ('age-confirmation', '1.0', '만 14세 이상 확인', true, now()),
   ('test-policy', '1.0', '테스트 등록 및 결과 제공 정책', true, now())
 on conflict (document_key, version) do nothing;
-

@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(24);
+select plan(29);
 
 insert into auth.users (
   id,
@@ -91,9 +91,18 @@ select set_config(
 );
 
 set local role authenticated;
+select throws_ok(
+  format(
+    $$select api.create_test_draft(%L::uuid, '잘못된 리워드', '서버 계약과 다른 리워드', now(), now() + interval '1 day', 30::smallint, 10::smallint)$$,
+    current_setting('test.store_id')
+  ),
+  'P0001',
+  'VALIDATION_FAILED',
+  'draft reward must match the server package catalog'
+);
 select lives_ok(
   format(
-    $$select api.create_test_draft(%L::uuid, 'A/B 포스터 테스트', '어느 포스터가 더 좋은가요?', now() - interval '1 hour', now() + interval '2 days', 30::smallint, 10::smallint)$$,
+    $$select api.create_test_draft(%L::uuid, 'A/B 포스터 테스트', '어느 포스터가 더 좋은가요?', now() - interval '1 hour', now() + interval '2 days', 30::smallint, 30::smallint)$$,
     current_setting('test.store_id')
   ),
   'owner creates a two-option draft'
@@ -214,6 +223,11 @@ select is(
   1::bigint,
   'repeating start with the same key does not charge twice'
 );
+select is(
+  jsonb_array_length(api.list_available_tests()),
+  0,
+  'an owner cannot discover a test from their own store'
+);
 
 select set_config(
   'request.jwt.claim.sub',
@@ -221,6 +235,11 @@ select set_config(
   true
 );
 set local role authenticated;
+select is(
+  jsonb_array_length(api.list_available_tests()),
+  1,
+  'a customer discovers an active test before voting'
+);
 select set_config(
   'test.vote_response',
   api.submit_vote(
@@ -249,7 +268,7 @@ select is(
 );
 select is(
   (select balance from private.reward_point_accounts where user_id = '20000000-0000-4000-8000-000000000002'),
-  10::bigint,
+  30::bigint,
   'customer reward points are credited separately'
 );
 select is(
@@ -284,8 +303,13 @@ select is(
   'replaying a vote idempotency key does not duplicate the vote'
 );
 select is(
+  jsonb_array_length(api.list_available_tests()),
+  0,
+  'a completed participation is removed from customer discovery'
+);
+select is(
   (select balance from private.reward_point_accounts where user_id = '20000000-0000-4000-8000-000000000002'),
-  10::bigint,
+  30::bigint,
   'replaying a vote does not duplicate the reward'
 );
 select is(
@@ -293,6 +317,19 @@ select is(
   1::bigint,
   'detail views are unique per user and Korea date'
 );
+
+select set_config(
+  'request.jwt.claim.sub',
+  '10000000-0000-4000-8000-000000000001',
+  true
+);
+set local role authenticated;
+select is(
+  (api.get_test_results(current_setting('test.test_id')::uuid) ->> 'detailViews')::bigint,
+  1::bigint,
+  'owner results expose the deduplicated detail view count'
+);
+reset role;
 
 update public.tests
 set starts_at = now() - interval '2 days',

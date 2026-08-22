@@ -1,8 +1,13 @@
 import { Suspense } from "react"
+import { connection } from "next/server"
+
+import { createDefaultTestPeriod } from "@/lib/test-period"
 
 import { NewTestFlow } from "./new-test-flow"
 
-export default function NewOwnerTestPage() {
+export default async function NewOwnerTestPage() {
+  await connection()
+
   return (
     <Suspense
       fallback={
@@ -11,7 +16,7 @@ export default function NewOwnerTestPage() {
         </main>
       }
     >
-      <NewTestFlow />
+      <NewTestFlow initialPeriod={createDefaultTestPeriod()} />
     </Suspense>
   )
 }

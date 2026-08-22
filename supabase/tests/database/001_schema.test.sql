@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(24);
+select plan(28);
 
 select has_schema('api', 'api schema exists');
 select has_schema('private', 'private schema exists');
@@ -10,11 +10,29 @@ select has_table('public', 'profiles', 'profiles table exists');
 select has_table('public', 'stores', 'stores table exists');
 select has_table('public', 'tests', 'tests table exists');
 select has_table('public', 'test_options', 'test options table exists');
+select has_column(
+  'public',
+  'pricing_packages',
+  'reward_points',
+  'pricing package owns the customer reward contract'
+);
 select has_table('private', 'owner_credit_entries', 'owner credit ledger exists');
 select has_table('private', 'reward_point_entries', 'reward point ledger exists');
 select has_table('private', 'votes', 'private votes table exists');
 select has_table('private', 'test_detail_views', 'detail view receipts exist');
 select has_function('api', 'start_test', array['uuid', 'uuid'], 'start RPC exists');
+select has_function(
+  'api',
+  'list_available_tests',
+  array[]::text[],
+  'customer discovery RPC exists'
+);
+select has_function(
+  'api',
+  'healthcheck',
+  array[]::text[],
+  'readiness healthcheck RPC exists'
+);
 select has_function(
   'api',
   'submit_vote',
@@ -86,6 +104,10 @@ select is(
 select ok(
   not has_function_privilege('anon', 'api.start_test(uuid,uuid)', 'execute'),
   'anonymous users cannot execute owner RPCs'
+);
+select ok(
+  has_function_privilege('anon', 'api.healthcheck()', 'execute'),
+  'anonymous readiness checks can execute only the healthcheck RPC'
 );
 select ok(
   has_function_privilege('authenticated', 'api.start_test(uuid,uuid)', 'execute'),

@@ -55,6 +55,7 @@ export type Database = {
       get_test_progress: { Args: { p_test_id: string }; Returns: Json }
       get_test_results: { Args: { p_test_id: string }; Returns: Json }
       get_vote_context: { Args: { p_slug: string }; Returns: Json }
+      list_available_tests: { Args: never; Returns: Json }
       record_test_detail_view: { Args: { p_slug: string }; Returns: Json }
       set_test_option_asset: {
         Args: { p_asset_path: string; p_option_id: string; p_test_id: string }
@@ -402,18 +403,21 @@ export type Database = {
         Row: {
           is_active: boolean
           price_credits: number
+          reward_points: number
           target_votes: number
           updated_at: string
         }
         Insert: {
           is_active?: boolean
           price_credits: number
+          reward_points?: number
           target_votes: number
           updated_at?: string
         }
         Update: {
           is_active?: boolean
           price_credits?: number
+          reward_points?: number
           target_votes?: number
           updated_at?: string
         }

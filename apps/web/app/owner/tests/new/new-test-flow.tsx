@@ -21,6 +21,12 @@ import {
   type StoreSummary,
 } from "@/lib/api/client"
 import { createClient } from "@/lib/supabase/client"
+import {
+  addDaysToDateValue,
+  createDefaultTestPeriod,
+  getPeriodDays,
+  type TestPeriod,
+} from "@/lib/test-period"
 
 import {
   activeTest,
@@ -31,6 +37,7 @@ import { OwnerShell } from "../../_components/owner-ui"
 
 type NewTestFlowProps = {
   mode?: "new" | "edit"
+  initialPeriod?: TestPeriod
 }
 
 type FlowStep = 1 | 2 | 3
@@ -38,63 +45,12 @@ type FlowStep = 1 | 2 | 3
 const fieldClass =
   "h-11 w-full rounded-xl border border-[#3b3b40] bg-[#1c1c1e] px-3.5 text-[13px] text-white outline-none placeholder:text-[#adadb8] focus:border-[#0a85ff] focus:ring-1 focus:ring-[#0a85ff]"
 
-type TestPeriod = {
-  startDate: string
-  endDate: string
-}
-
-const defaultTestPeriod: TestPeriod = {
-  startDate: "2026-08-20",
-  endDate: "2026-08-22",
-}
-
 const periodPresets = [
   { label: "1일", days: 1 },
   { label: "3일", days: 3 },
   { label: "5일", days: 5 },
   { label: "7일", days: 7 },
 ]
-
-const dayInMilliseconds = 24 * 60 * 60 * 1000
-
-function dateValueToUtc(value: string) {
-  const parts = value.split("-").map(Number)
-  const year = parts[0]
-  const month = parts[1]
-  const day = parts[2]
-
-  if (
-    year === undefined ||
-    month === undefined ||
-    day === undefined ||
-    ![year, month, day].every(Number.isFinite)
-  ) {
-    return Number.NaN
-  }
-
-  return Date.UTC(year, month - 1, day)
-}
-
-function addDaysToDateValue(value: string, days: number) {
-  const timestamp = dateValueToUtc(value)
-
-  if (!Number.isFinite(timestamp)) return value
-
-  return new Date(timestamp + days * dayInMilliseconds)
-    .toISOString()
-    .slice(0, 10)
-}
-
-function getPeriodDays(period: TestPeriod) {
-  const start = dateValueToUtc(period.startDate)
-  const end = dateValueToUtc(period.endDate)
-
-  if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) {
-    return 0
-  }
-
-  return Math.floor((end - start) / dayInMilliseconds) + 1
-}
 
 function formatPeriodDate(value: string) {
   const [, month, day] = value.split("-").map(Number)
@@ -155,6 +111,7 @@ function PosterUploadCard({
           src={imageSrc}
           alt={`포스터 ${label}`}
           fill
+          unoptimized={imageSrc.startsWith("http")}
           sizes="(min-width: 768px) 360px, 50vw"
           className="object-contain"
         />
@@ -173,6 +130,8 @@ function PosterUploadCard({
         type="file"
         accept="image/*"
         className="sr-only"
+        tabIndex={-1}
+        aria-hidden="true"
         onChange={(event) => {
           const file = event.target.files?.[0]
           if (file) onChange(file)
@@ -192,6 +151,7 @@ function PosterUploadCard({
 function PosterStep({
   title,
   fileNames,
+  imageSources,
   question,
   onTitleChange,
   onQuestionChange,
@@ -200,6 +160,7 @@ function PosterStep({
 }: {
   title: string
   fileNames: [string, string]
+  imageSources: [string, string]
   question: string
   onTitleChange: (value: string) => void
   onQuestionChange: (value: string) => void
@@ -231,7 +192,7 @@ function PosterStep({
           label="A"
           fileName={fileNames[0]}
           inputId="poster-a"
-          imageSrc={posterAssets.a}
+          imageSrc={imageSources[0]}
           highlighted
           onChange={(value) => onFileChange(0, value)}
         />
@@ -239,7 +200,7 @@ function PosterStep({
           label="B"
           fileName={fileNames[1]}
           inputId="poster-b"
-          imageSrc={posterAssets.b}
+          imageSrc={imageSources[1]}
           onChange={(value) => onFileChange(1, value)}
         />
       </div>
@@ -278,7 +239,7 @@ function ConditionStep({
 }: {
   selectedVotes: number
   period: TestPeriod
-  packages: Array<{ votes: number; price: number }>
+  packages: Array<{ votes: number; price: number; rewardPoints: number }>
   onSelectVotes: (votes: number) => void
   onChangePeriod: (period: TestPeriod) => void
   onNext: () => void
@@ -287,10 +248,9 @@ function ConditionStep({
   const selectedPackage =
     packages.find((item) => item.votes === selectedVotes) ?? packages.at(-1)!
   const periodDays = getPeriodDays(period)
-  const totalPrice = selectedPackage.price * periodDays
 
   function selectPreset(days: number) {
-    const startDate = period.startDate || defaultTestPeriod.startDate
+    const startDate = period.startDate || createDefaultTestPeriod().startDate
 
     onChangePeriod({
       startDate,
@@ -309,9 +269,9 @@ function ConditionStep({
 
   return (
     <section className="flex min-h-[calc(100svh-56px)] flex-1 flex-col px-5 pt-5 sm:px-8 md:mx-auto md:w-full md:max-w-3xl md:px-8 md:pt-10">
-      <h1 className="text-xl font-semibold">하루 최소 보장 투표 수</h1>
+      <h1 className="text-xl font-semibold">목표 투표 수</h1>
       <p className="mt-1 text-[13px] text-[#adadb8]">
-        설정한 하루 최소 인원만큼 투표를 보장해 드려요.
+        테스트 전체에서 확보할 목표 인원을 선택해 주세요.
       </p>
 
       <div className="mt-5 grid grid-cols-2 gap-2">
@@ -340,7 +300,7 @@ function ConditionStep({
                 {item.votes}명
               </span>
               <span className="mt-0.5 block text-xs text-white/80">
-                {item.price.toLocaleString("ko-KR")}원
+                {item.price.toLocaleString("ko-KR")} 크레딧
               </span>
             </button>
           )
@@ -438,26 +398,30 @@ function ConditionStep({
         ) : null}
       </div>
       <p className="mt-2 text-xs text-[#adadb8]">
-        매일 최소 보장 투표 수를 기준으로 운영됩니다.
+        기간 안에 목표 인원에 도달하면 테스트가 자동으로 완료됩니다.
       </p>
 
       <div className="mt-5 rounded-2xl border border-[#3d3d42] bg-[#1c1c1f] p-4">
         <div className="flex items-center justify-between text-[15px] font-semibold">
-          <span>예상 사용 금액</span>
-          <span>총 {totalPrice.toLocaleString("ko-KR")}원</span>
+          <span>예상 사용 크레딧</span>
+          <span>총 {selectedPackage.price.toLocaleString("ko-KR")}</span>
         </div>
         <div className="mt-2 space-y-1.5 text-[13px]">
           <div className="flex justify-between">
-            <span className="text-[#adadb8]">하루 최소 보장</span>
+            <span className="text-[#adadb8]">목표 투표</span>
             <span>{selectedVotes}명</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-[#adadb8]">하루 사용 금액</span>
-            <span>{selectedPackage.price.toLocaleString("ko-KR")}원</span>
+            <span className="text-[#adadb8]">패키지 크레딧</span>
+            <span>{selectedPackage.price.toLocaleString("ko-KR")}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-[#adadb8]">운영 기간</span>
             <span>{periodDays}일</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-[#adadb8]">참여 리워드</span>
+            <span>{selectedPackage.rewardPoints}P</span>
           </div>
         </div>
       </div>
@@ -467,11 +431,9 @@ function ConditionStep({
           <InfoIcon className="size-3.5" aria-hidden="true" />
         </span>
         <div>
-          <p className="text-sm font-semibold">
-            최소 보장 인원 미달 시 비례 환급
-          </p>
+          <p className="text-sm font-semibold">목표 인원 미달 시 비례 환급</p>
           <p className="mt-2 text-xs leading-5 text-[#adadb8]">
-            하루 기준 최소 보장 투표 수를 채우지 못하면,
+            종료일까지 목표 투표 수를 채우지 못하면,
             <br />
             부족한 인원만큼 사용 금액을 비례 환급해 드립니다.
           </p>
@@ -497,14 +459,25 @@ function ConfirmStep({
 }: {
   selectedVotes: number
   period: TestPeriod
-  packages: Array<{ votes: number; price: number }>
+  packages: Array<{ votes: number; price: number; rewardPoints: number }>
   onConfirm: () => void
   onCancel: () => void
 }) {
   const selectedPackage =
     packages.find((item) => item.votes === selectedVotes) ?? packages.at(-1)!
   const periodDays = getPeriodDays(period)
-  const totalPrice = selectedPackage.price * periodDays
+  const dialogRef = useRef<HTMLDialogElement>(null)
+
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog) return
+
+    if (!dialog.open) dialog.showModal()
+
+    return () => {
+      if (dialog.open) dialog.close()
+    }
+  }, [])
 
   return (
     <div className="relative min-h-[calc(100svh-56px)] flex-1 px-5 pt-8">
@@ -513,12 +486,14 @@ function ConfirmStep({
       <div className="mt-4 h-[52px] rounded-[14px] bg-[#26262b]" />
       <div className="mt-4 h-[118px] rounded-[14px] bg-[#26262b]" />
 
-      <div className="fixed inset-0 z-20 bg-black/60" aria-hidden="true" />
-      <section
-        role="dialog"
-        aria-modal="true"
+      <dialog
+        ref={dialogRef}
         aria-labelledby="confirm-title"
-        className="fixed inset-x-0 bottom-0 z-30 mx-auto min-h-[562px] w-full max-w-[390px] rounded-t-[22px] bg-[#1c1c1f] px-5 pt-3 md:max-w-[560px] md:px-8"
+        onCancel={(event) => {
+          event.preventDefault()
+          onCancel()
+        }}
+        className="fixed inset-x-0 top-auto bottom-0 z-30 mx-auto h-[min(562px,calc(100svh-24px))] w-full max-w-[390px] overflow-y-auto rounded-t-[22px] border-0 bg-[#1c1c1f] px-5 pt-3 text-white backdrop:bg-black/60 md:max-w-[560px] md:px-8"
       >
         <div className="mx-auto h-1.5 w-[70px] rounded-full bg-[#adadb8]" />
         <h2 id="confirm-title" className="mt-7 text-[22px] font-semibold">
@@ -526,7 +501,7 @@ function ConfirmStep({
         </h2>
         <div className="mt-8 space-y-5 text-sm">
           <div className="flex justify-between gap-4">
-            <span className="text-[#adadb8]">하루 최소 보장 투표 수</span>
+            <span className="text-[#adadb8]">목표 투표 수</span>
             <span className="font-semibold">{selectedVotes}명</span>
           </div>
           <div className="flex justify-between gap-4">
@@ -539,44 +514,54 @@ function ConfirmStep({
             </span>
           </div>
           <div className="flex justify-between gap-4">
-            <span className="text-[#adadb8]">하루 사용 금액</span>
+            <span className="text-[#adadb8]">패키지 크레딧</span>
             <span className="font-semibold">
-              {selectedPackage.price.toLocaleString("ko-KR")}원
+              {selectedPackage.price.toLocaleString("ko-KR")}
+            </span>
+          </div>
+          <div className="flex justify-between gap-4">
+            <span className="text-[#adadb8]">참여 리워드</span>
+            <span className="font-semibold">
+              {selectedPackage.rewardPoints}P
             </span>
           </div>
         </div>
         <div className="mt-7 border-t border-[#3d3d42] pt-5">
           <div className="flex items-center justify-between font-semibold">
-            <span>총 사용 금액</span>
+            <span>총 사용 크레딧</span>
             <span className="text-xl">
-              {totalPrice.toLocaleString("ko-KR")}원
+              {selectedPackage.price.toLocaleString("ko-KR")}
             </span>
           </div>
         </div>
-        <div className="absolute inset-x-5 bottom-5 space-y-5">
+        <div className="mt-8 space-y-5 pb-5">
           <FlowButton onClick={onConfirm}>
             시작하기
             <ArrowRightIcon aria-hidden="true" />
           </FlowButton>
           <button
             type="button"
+            autoFocus
             className="block w-full text-center text-base font-semibold text-[#adadb8] transition-colors hover:text-white"
             onClick={onCancel}
           >
             취소
           </button>
         </div>
-      </section>
+      </dialog>
     </div>
   )
 }
 
-export function NewTestFlow({ mode = "new" }: NewTestFlowProps) {
+export function NewTestFlow({ mode = "new", initialPeriod }: NewTestFlowProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const requestedStoreId = searchParams.get("storeId")
   const editingTestId = pathname.match(/\/owner\/tests\/([^/]+)\/edit/)?.[1]
+  const [workingTestId, setWorkingTestId] = useState<string | undefined>(
+    editingTestId
+  )
   const [step, setStep] = useState<FlowStep>(1)
   const [stores, setStores] = useState<StoreSummary[]>([])
   const [catalog, setCatalog] = useState<Catalog | null>(null)
@@ -588,8 +573,16 @@ export function NewTestFlow({ mode = "new" }: NewTestFlowProps) {
   const [files, setFiles] = useState<[File | null, File | null]>([null, null])
   const [fileNames, setFileNames] = useState<[string, string]>(["", ""])
   const [optionIds, setOptionIds] = useState<[string, string]>(["", ""])
+  const [existingAssetUrls, setExistingAssetUrls] = useState<
+    [string | null, string | null]
+  >([null, null])
+  const [uploadedOptionIds, setUploadedOptionIds] = useState<Set<string>>(
+    () => new Set()
+  )
   const [selectedVotes, setSelectedVotes] = useState(activeTest.dailyVotes)
-  const [period, setPeriod] = useState<TestPeriod>(defaultTestPeriod)
+  const [period, setPeriod] = useState<TestPeriod>(
+    () => initialPeriod ?? createDefaultTestPeriod()
+  )
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [idempotencyKey, setIdempotencyKey] = useState<string | null>(null)
@@ -606,6 +599,7 @@ export function NewTestFlow({ mode = "new" }: NewTestFlowProps) {
       catalog?.pricingPackages.map((item) => ({
         votes: item.targetVotes,
         price: item.priceCredits,
+        rewardPoints: item.rewardPoints,
       })) ?? votePackages,
     [catalog]
   )
@@ -674,15 +668,27 @@ export function NewTestFlow({ mode = "new" }: NewTestFlowProps) {
           }
 
           const progress = await apiFetch<{
-            options: Array<{ id: string; position: 1 | 2 }>
+            question: string
+            rewardPoints: number
+            options: Array<{
+              id: string
+              position: 1 | 2
+              assetUrl?: string
+            }>
           }>(
             `/api/owner/stores/${nextStore.id}/tests/${editingTestId}/progress`
           )
           const sortedOptions = [...progress.options].sort(
             (a, b) => a.position - b.position
           )
+          setQuestion(progress.question)
+          setWorkingTestId(editingTestId)
           if (sortedOptions[0] && sortedOptions[1]) {
             setOptionIds([sortedOptions[0].id, sortedOptions[1].id])
+            setExistingAssetUrls([
+              sortedOptions[0].assetUrl ?? null,
+              sortedOptions[1].assetUrl ?? null,
+            ])
           }
         }
       } catch (error) {
@@ -748,7 +754,13 @@ export function NewTestFlow({ mode = "new" }: NewTestFlowProps) {
 
   async function handleConfirm() {
     if (!selectedStore) return
-    if (!files[0] || !files[1]) {
+    const hasFirstPoster = Boolean(
+      files[0] || existingAssetUrls[0] || uploadedOptionIds.has(optionIds[0])
+    )
+    const hasSecondPoster = Boolean(
+      files[1] || existingAssetUrls[1] || uploadedOptionIds.has(optionIds[1])
+    )
+    if (!hasFirstPoster || !hasSecondPoster) {
       setErrorMessage("A와 B 포스터 이미지를 모두 업로드해 주세요.")
       setStep(1)
       return
@@ -760,18 +772,24 @@ export function NewTestFlow({ mode = "new" }: NewTestFlowProps) {
     try {
       const startsAt = toIsoDate(period.startDate)
       const endsAt = toIsoDate(period.endDate, true)
+      const selectedPackage = packages.find(
+        (item) => item.votes === selectedVotes
+      )
+      if (!selectedPackage || getPeriodDays(period) < 1) {
+        throw new Error("INVALID_TEST_PERIOD")
+      }
       const body = {
         title,
         question,
         startsAt,
         endsAt,
         targetVotes: selectedVotes,
-        rewardPoints: 10,
+        rewardPoints: selectedPackage.rewardPoints,
       }
-      let testId = editingTestId
+      let testId = workingTestId
       let nextOptionIds = optionIds
 
-      if (mode === "edit" && testId) {
+      if (testId) {
         await apiFetch(
           `/api/owner/stores/${selectedStore.id}/tests/${testId}`,
           { method: "PATCH", body: JSON.stringify(body) }
@@ -783,6 +801,7 @@ export function NewTestFlow({ mode = "new" }: NewTestFlowProps) {
         )
         testId = draft.id
         nextOptionIds = [draft.optionAId, draft.optionBId]
+        setWorkingTestId(testId)
         setOptionIds(nextOptionIds)
       }
 
@@ -790,10 +809,15 @@ export function NewTestFlow({ mode = "new" }: NewTestFlowProps) {
         throw new Error("DRAFT_OPTIONS_MISSING")
       }
 
-      await Promise.all([
-        uploadPoster(selectedStore.id, testId, nextOptionIds[0], files[0]),
-        uploadPoster(selectedStore.id, testId, nextOptionIds[1], files[1]),
-      ])
+      const nextUploadedOptionIds = new Set(uploadedOptionIds)
+      for (const [index, optionId] of nextOptionIds.entries()) {
+        const file = files[index]
+        if (!file || nextUploadedOptionIds.has(optionId)) continue
+
+        await uploadPoster(selectedStore.id, testId, optionId, file)
+        nextUploadedOptionIds.add(optionId)
+        setUploadedOptionIds(new Set(nextUploadedOptionIds))
+      }
 
       const key = idempotencyKey ?? crypto.randomUUID()
       if (!idempotencyKey) setIdempotencyKey(key)
@@ -875,6 +899,10 @@ export function NewTestFlow({ mode = "new" }: NewTestFlowProps) {
         <PosterStep
           title={title}
           fileNames={fileNames}
+          imageSources={[
+            existingAssetUrls[0] ?? posterAssets.a,
+            existingAssetUrls[1] ?? posterAssets.b,
+          ]}
           question={question}
           onTitleChange={setTitle}
           onQuestionChange={setQuestion}
@@ -889,6 +917,14 @@ export function NewTestFlow({ mode = "new" }: NewTestFlowProps) {
               next[index] = file.name
               return next
             })
+            const optionId = optionIds[index]
+            if (optionId) {
+              setUploadedOptionIds((current) => {
+                const next = new Set(current)
+                next.delete(optionId)
+                return next
+              })
+            }
           }}
           onNext={() => setStep(2)}
         />
