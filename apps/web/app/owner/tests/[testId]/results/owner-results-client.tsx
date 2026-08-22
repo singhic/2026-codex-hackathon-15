@@ -102,70 +102,100 @@ export function OwnerResultsClient({ testId }: { testId: string }) {
   const winnerLabel = winner
     ? `포스터 ${winner.position === 1 ? "A" : "B"}`
     : "고객 픽"
+  const conversionRate =
+    result.detailViews > 0
+      ? Math.min(100, Math.round((result.voteCount / result.detailViews) * 100))
+      : 0
+  const targetRate =
+    result.targetVotes > 0
+      ? Math.min(100, Math.round((result.voteCount / result.targetVotes) * 100))
+      : 0
 
   return (
     <OwnerShell activeTab="picks" storeId={selectedStore?.id}>
       <section className="flex flex-1 flex-col px-5 pt-7 pb-5 sm:px-8 md:mx-auto md:w-full md:max-w-none md:px-[clamp(40px,5vw,96px)] md:pt-12">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-[26px] font-semibold">완료 리포트</h1>
-            <p className="mt-1 text-sm text-[#adadb8]">
-              고객이 선택한 포스터 결과를 확인하세요.
-            </p>
+            <p className="mt-1 text-sm text-[#adadb8]">{result.title}</p>
           </div>
           <Link
             href={`/owner/tests/${testId}?storeId=${selectedStore?.id ?? ""}`}
-            className="text-sm font-semibold text-[#adadb8]"
+            className="rounded-md text-sm font-semibold text-[#adadb8] transition-colors outline-none hover:text-white focus-visible:ring-2 focus-visible:ring-[#0a85ff] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
           >
             진행 현황
           </Link>
         </div>
 
         <h2 className="mt-8 text-base font-semibold">성과 요약</h2>
-        <div className="mt-3 grid max-w-none grid-cols-3 gap-3">
+        <div className="mt-3 grid max-w-none grid-cols-2 gap-3 sm:grid-cols-4">
+          <MetricCard label="상세 조회" value={`${result.detailViews}회`} />
           <MetricCard label="투표 수" value={`${result.voteCount}명`} />
-          <MetricCard label="목표 투표" value={`${result.targetVotes}명`} />
-          <MetricCard label="상태" value={getStatusLabel(result.status)} />
+          <MetricCard label="투표 전환율" value={`${conversionRate}%`} />
+          <MetricCard label="목표 달성률" value={`${targetRate}%`} />
         </div>
+        <p className="mt-3 text-xs leading-5 text-[#adadb8]">
+          투표 전환율은 중복 제거된 상세 조회 대비 실제 투표 비율입니다. 현재
+          상태는 {getStatusLabel(result.status)}이며 목표는 {result.targetVotes}
+          명입니다.
+        </p>
 
         <h2 className="mt-8 text-[24px] font-semibold">고객이 픽한 포스터</h2>
-        <article className="relative mt-3 min-h-[322px] max-w-[640px] rounded-[18px] border border-[#3d3d42] bg-[#1c1c1f] p-4">
+        <article className="mt-3 grid max-w-[820px] gap-4 rounded-[18px] border border-[#3d3d42] bg-[#1c1c1f] p-4 sm:grid-cols-[minmax(0,2fr)_minmax(140px,1fr)] sm:p-6">
           {winner ? (
-            <div className="absolute top-[58px] left-6 w-[196px]">
-              <span className="mx-auto flex h-9 w-fit min-w-[84px] items-center justify-center rounded-full bg-[#0a85ff] px-4 text-base font-semibold">
-                {winnerLabel.replace("포스터 ", "")}안
-              </span>
-              <div className="relative mt-3 flex h-[200px] w-[196px] items-center justify-center rounded-[12px] bg-[#29292e]">
+            <section aria-labelledby="winner-heading" className="min-w-0">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold tracking-[0.14em] text-[#70b9ff]">
+                    CUSTOMER PICK
+                  </p>
+                  <h3
+                    id="winner-heading"
+                    className="mt-1 text-xl font-semibold"
+                  >
+                    {winnerLabel}
+                  </h3>
+                </div>
+                <span className="rounded-full bg-[#0a85ff] px-3 py-1.5 text-sm font-semibold">
+                  {winner.percentage}% · {winner.voteCount}표
+                </span>
+              </div>
+              <div className="relative mt-4 aspect-[4/3] min-h-[220px] overflow-hidden rounded-[14px] bg-[#29292e] sm:aspect-[16/10]">
                 <PosterPlaceholder
                   label={winnerLabel}
                   variant={winner.position === 1 ? "a" : "b"}
                   imageSrc={winner.assetUrl}
-                  className="h-[196px] w-[165px] border-0 rounded-[10px]"
+                  className="h-full w-full rounded-[14px] border-0"
                 />
-                <p className="absolute inset-x-0 bottom-4 text-center text-[36px] font-semibold leading-none text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
-                  {winner.percentage}%
-                </p>
               </div>
-            </div>
+            </section>
           ) : null}
 
           {loser ? (
-            <div className="absolute top-[190px] right-5 w-[84px] text-center">
-              <p className="text-xs text-[#adadb8]">
-                포스터 {loser.position === 1 ? "A" : "B"}
-              </p>
+            <section className="flex min-w-0 flex-col justify-end rounded-[14px] bg-[#26262b] p-3 sm:p-4">
+              <div className="flex items-center justify-between gap-2 sm:block">
+                <h3 className="text-sm font-semibold text-[#d4d4dc]">
+                  포스터 {loser.position === 1 ? "A" : "B"}
+                </h3>
+                <p className="text-sm font-semibold sm:mt-1">
+                  {loser.percentage}% · {loser.voteCount}표
+                </p>
+              </div>
               <PosterPlaceholder
                 label={`포스터 ${loser.position === 1 ? "A" : "B"}`}
                 variant={loser.position === 1 ? "a" : "b"}
                 imageSrc={loser.assetUrl}
-                compact
-                className="mt-2 h-[78px] w-[84px] border-0 rounded-[10px]"
+                className="mt-3 h-[180px] w-full rounded-[10px] border-0 sm:h-[220px]"
               />
-              <p className="mt-1 text-xs text-white">{loser.percentage}%</p>
-            </div>
+            </section>
+          ) : null}
+
+          {!winner && !loser ? (
+            <p className="text-sm text-[#adadb8]">
+              집계할 포스터 결과가 없습니다.
+            </p>
           ) : null}
         </article>
-
       </section>
     </OwnerShell>
   )
@@ -173,7 +203,11 @@ export function OwnerResultsClient({ testId }: { testId: string }) {
 
 function Message({ children }: { children: React.ReactNode }) {
   return (
-    <section className="flex min-h-[700px] items-center justify-center px-6 text-center text-sm text-[#adadb8]">
+    <section
+      role="status"
+      aria-live="polite"
+      className="flex min-h-[700px] items-center justify-center px-6 text-center text-sm text-[#adadb8]"
+    >
       {children}
     </section>
   )

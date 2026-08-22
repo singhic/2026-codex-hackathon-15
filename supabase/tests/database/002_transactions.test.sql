@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(28);
+select plan(29);
 
 insert into auth.users (
   id,
@@ -317,6 +317,19 @@ select is(
   1::bigint,
   'detail views are unique per user and Korea date'
 );
+
+select set_config(
+  'request.jwt.claim.sub',
+  '10000000-0000-4000-8000-000000000001',
+  true
+);
+set local role authenticated;
+select is(
+  (api.get_test_results(current_setting('test.test_id')::uuid) ->> 'detailViews')::bigint,
+  1::bigint,
+  'owner results expose the deduplicated detail view count'
+);
+reset role;
 
 update public.tests
 set starts_at = now() - interval '2 days',

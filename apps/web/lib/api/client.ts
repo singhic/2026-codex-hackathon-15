@@ -158,6 +158,7 @@ export type TestResult = {
   status: TestStatus
   voteCount: number
   targetVotes: number
+  detailViews: number
   options: Array<{
     id: UUID
     position: 1 | 2

@@ -94,10 +94,10 @@ function PageShell({
           <p className="text-sm font-semibold tracking-[0.24em] text-[#adadb8] uppercase">
             THE PICK
           </p>
-          <h1 className="mt-7 text-5xl leading-[1.12] font-semibold tracking-tight">
+          <p className="mt-7 text-5xl leading-[1.12] font-semibold tracking-tight">
             고객의 선택으로
             <br />더 확신 있게 홍보하세요.
-          </h1>
+          </p>
           <p className="mt-6 max-w-lg text-base leading-7 text-[#adadb8]">
             두 가지 포스터를 등록하고 실제 고객의 선택을 확인해 보세요.
           </p>
@@ -123,14 +123,17 @@ function PageShell({
               <button
                 type="button"
                 aria-label="이전 화면"
-                className="inline-flex size-6 shrink-0 items-center justify-center text-white transition-opacity hover:opacity-70"
+                className="inline-flex size-6 shrink-0 items-center justify-center rounded-md text-white transition-opacity outline-none hover:opacity-70 focus-visible:ring-2 focus-visible:ring-[#0a85ff] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                 onClick={onBack}
               >
                 <ChevronLeftIcon className="size-6" aria-hidden="true" />
               </button>
             ) : null}
             {logo ? (
-              <Link href="/" className="text-xl font-semibold tracking-tight">
+              <Link
+                href="/"
+                className="rounded-md text-xl font-semibold tracking-tight outline-none focus-visible:ring-2 focus-visible:ring-[#0a85ff] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+              >
                 더픽
               </Link>
             ) : (
@@ -217,7 +220,7 @@ function RoleSelection({
         </p>
         <button
           type="button"
-          className="mt-7 self-start text-sm font-semibold text-[#adadb8] transition-colors hover:text-white"
+          className="mt-7 self-start rounded-md text-sm font-semibold text-[#adadb8] transition-colors outline-none hover:text-white focus-visible:ring-2 focus-visible:ring-[#0a85ff] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
           onClick={onExistingLogin}
         >
           이미 계정이 있어요. 로그인
@@ -249,7 +252,7 @@ function RoleCard({
   return (
     <button
       type="button"
-      className={`relative flex h-[132px] w-full items-start gap-4 rounded-[18px] border bg-[#1c1c1f] px-5 py-5 text-left transition-colors ${
+      className={`relative flex h-[132px] w-full items-start gap-4 rounded-[18px] border bg-[#1c1c1f] px-5 py-5 text-left transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[#0a85ff] focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
         selected ? "border-[#0a85ff]" : "border-[#3d3d42]"
       }`}
       aria-pressed={selected}

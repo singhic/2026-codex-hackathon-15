@@ -179,7 +179,9 @@ export function PosterPlaceholder({
 }) {
   const resolvedImageSrc =
     imageSrc ??
-    (variant === "a" ? "/posters/strawberry-a.png" : "/posters/strawberry-b.png")
+    (variant === "a"
+      ? "/posters/strawberry-a.png"
+      : "/posters/strawberry-b.png")
 
   return (
     <div
@@ -198,6 +200,7 @@ export function PosterPlaceholder({
           src={resolvedImageSrc}
           alt={imageAlt ?? label}
           fill
+          unoptimized={resolvedImageSrc.startsWith("http")}
           sizes={compact ? "84px" : "(min-width: 768px) 360px, 50vw"}
           className="object-cover object-center"
         />

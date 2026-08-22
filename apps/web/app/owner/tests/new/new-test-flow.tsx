@@ -111,6 +111,7 @@ function PosterUploadCard({
           src={imageSrc}
           alt={`포스터 ${label}`}
           fill
+          unoptimized={imageSrc.startsWith("http")}
           sizes="(min-width: 768px) 360px, 50vw"
           className="object-contain"
         />
@@ -129,6 +130,8 @@ function PosterUploadCard({
         type="file"
         accept="image/*"
         className="sr-only"
+        tabIndex={-1}
+        aria-hidden="true"
         onChange={(event) => {
           const file = event.target.files?.[0]
           if (file) onChange(file)
@@ -463,6 +466,18 @@ function ConfirmStep({
   const selectedPackage =
     packages.find((item) => item.votes === selectedVotes) ?? packages.at(-1)!
   const periodDays = getPeriodDays(period)
+  const dialogRef = useRef<HTMLDialogElement>(null)
+
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog) return
+
+    if (!dialog.open) dialog.showModal()
+
+    return () => {
+      if (dialog.open) dialog.close()
+    }
+  }, [])
 
   return (
     <div className="relative min-h-[calc(100svh-56px)] flex-1 px-5 pt-8">
@@ -471,12 +486,14 @@ function ConfirmStep({
       <div className="mt-4 h-[52px] rounded-[14px] bg-[#26262b]" />
       <div className="mt-4 h-[118px] rounded-[14px] bg-[#26262b]" />
 
-      <div className="fixed inset-0 z-20 bg-black/60" aria-hidden="true" />
-      <section
-        role="dialog"
-        aria-modal="true"
+      <dialog
+        ref={dialogRef}
         aria-labelledby="confirm-title"
-        className="fixed inset-x-0 bottom-0 z-30 mx-auto min-h-[562px] w-full max-w-[390px] rounded-t-[22px] bg-[#1c1c1f] px-5 pt-3 md:max-w-[560px] md:px-8"
+        onCancel={(event) => {
+          event.preventDefault()
+          onCancel()
+        }}
+        className="fixed inset-x-0 top-auto bottom-0 z-30 mx-auto h-[min(562px,calc(100svh-24px))] w-full max-w-[390px] overflow-y-auto rounded-t-[22px] border-0 bg-[#1c1c1f] px-5 pt-3 text-white backdrop:bg-black/60 md:max-w-[560px] md:px-8"
       >
         <div className="mx-auto h-1.5 w-[70px] rounded-full bg-[#adadb8]" />
         <h2 id="confirm-title" className="mt-7 text-[22px] font-semibold">
@@ -517,20 +534,21 @@ function ConfirmStep({
             </span>
           </div>
         </div>
-        <div className="absolute inset-x-5 bottom-5 space-y-5">
+        <div className="mt-8 space-y-5 pb-5">
           <FlowButton onClick={onConfirm}>
             시작하기
             <ArrowRightIcon aria-hidden="true" />
           </FlowButton>
           <button
             type="button"
+            autoFocus
             className="block w-full text-center text-base font-semibold text-[#adadb8] transition-colors hover:text-white"
             onClick={onCancel}
           >
             취소
           </button>
         </div>
-      </section>
+      </dialog>
     </div>
   )
 }
