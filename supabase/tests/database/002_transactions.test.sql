@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(25);
+select plan(28);
 
 insert into auth.users (
   id,
@@ -223,6 +223,11 @@ select is(
   1::bigint,
   'repeating start with the same key does not charge twice'
 );
+select is(
+  jsonb_array_length(api.list_available_tests()),
+  0,
+  'an owner cannot discover a test from their own store'
+);
 
 select set_config(
   'request.jwt.claim.sub',
@@ -230,6 +235,11 @@ select set_config(
   true
 );
 set local role authenticated;
+select is(
+  jsonb_array_length(api.list_available_tests()),
+  1,
+  'a customer discovers an active test before voting'
+);
 select set_config(
   'test.vote_response',
   api.submit_vote(
@@ -291,6 +301,11 @@ select is(
   (select count(*) from private.votes where test_id = current_setting('test.test_id')::uuid),
   1::bigint,
   'replaying a vote idempotency key does not duplicate the vote'
+);
+select is(
+  jsonb_array_length(api.list_available_tests()),
+  0,
+  'a completed participation is removed from customer discovery'
 );
 select is(
   (select balance from private.reward_point_accounts where user_id = '20000000-0000-4000-8000-000000000002'),

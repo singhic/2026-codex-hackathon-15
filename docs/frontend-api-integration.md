@@ -480,6 +480,35 @@ type OwnerWallet = {
 
 ## 6. 투표 고객 API
 
+### 참여 가능한 테스트 탐색
+
+`GET /api/votes/available`
+
+현재 고객이 참여할 수 있는 활성 테스트를 최대 20개 반환합니다. 본인 매장 테스트와 이미 투표한 테스트는 제외하고, 고객이 활동 지역을 설정했다면 같은 지역만 보여줍니다. 관심 업종과 마감 시각을 기준으로 정렬합니다.
+
+```ts
+type AvailableTest = {
+  id: UUID
+  slug: string
+  storeName: string
+  categoryName: string
+  regionCode: string
+  title: string
+  question: string
+  rewardPoints: number
+  voteCount: number
+  targetVotes: number
+  endsAt: ISODateTime
+  options: Array<{
+    id: UUID
+    position: 1 | 2
+    assetUrl: string
+  }>
+}
+```
+
+포스터 URL은 다른 조회 API와 마찬가지로 10분짜리 signed URL이며 고객 홈에 영구 저장하지 않습니다.
+
 ### 투표 화면 조회
 
 `GET /api/vote/{slug}`

@@ -1,7 +1,8 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import { MapPinIcon, UserRoundIcon } from "lucide-react"
+import { ArrowRightIcon, MapPinIcon, UserRoundIcon } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 
@@ -13,6 +14,7 @@ import {
   apiFetch,
   getApiErrorMessage,
   type AgeBand,
+  type AvailableTest,
   type Catalog,
   type MyProfile,
   type RewardWallet,
@@ -34,6 +36,7 @@ export function CustomerHomeClient() {
   const [profile, setProfile] = useState<MyProfile | null>(null)
   const [rewards, setRewards] = useState<RewardWallet | null>(null)
   const [catalog, setCatalog] = useState<Catalog | null>(null)
+  const [availableTests, setAvailableTests] = useState<AvailableTest[]>([])
   const [displayName, setDisplayName] = useState("")
   const [regionCode, setRegionCode] = useState("")
   const [ageBand, setAgeBand] = useState<AgeBand | "">("")
@@ -46,14 +49,17 @@ export function CustomerHomeClient() {
     setIsLoading(true)
     setMessage(null)
     try {
-      const [nextProfile, nextRewards, nextCatalog] = await Promise.all([
-        apiFetch<MyProfile>("/api/me/profile"),
-        apiFetch<RewardWallet>("/api/me/rewards"),
-        apiFetch<Catalog>("/api/catalog"),
-      ])
+      const [nextProfile, nextRewards, nextCatalog, nextAvailableTests] =
+        await Promise.all([
+          apiFetch<MyProfile>("/api/me/profile"),
+          apiFetch<RewardWallet>("/api/me/rewards"),
+          apiFetch<Catalog>("/api/catalog"),
+          apiFetch<AvailableTest[]>("/api/votes/available"),
+        ])
       setProfile(nextProfile)
       setRewards(nextRewards)
       setCatalog(nextCatalog)
+      setAvailableTests(nextAvailableTests)
       setDisplayName(nextProfile.displayName)
       setRegionCode(nextProfile.regionCode ?? "")
       setAgeBand(nextProfile.ageBand ?? "")
@@ -92,6 +98,7 @@ export function CustomerHomeClient() {
         }),
       })
       setProfile(nextProfile)
+      setAvailableTests(await apiFetch<AvailableTest[]>("/api/votes/available"))
       setMessage("프로필을 저장했습니다.")
     } catch (error) {
       setMessage(
@@ -153,6 +160,46 @@ export function CustomerHomeClient() {
           <p className="mt-4 max-w-xl text-sm leading-6 text-[#adadb8] md:text-base">
             짧은 투표로 사장님의 더 좋은 홍보물을 만들고 포인트를 받아요.
           </p>
+
+          <section className="mt-10" aria-labelledby="available-votes-title">
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <h2
+                  id="available-votes-title"
+                  className="text-xl font-semibold"
+                >
+                  참여 가능한 투표
+                </h2>
+                <p className="mt-1 text-xs text-[#adadb8]">
+                  활동 지역과 관심 업종을 기준으로 보여드려요.
+                </p>
+              </div>
+              <span className="text-sm font-semibold text-[#80c4ff]">
+                {availableTests.length}개
+              </span>
+            </div>
+
+            {availableTests.length > 0 ? (
+              <div className="mt-4 space-y-4">
+                {availableTests.map((test) => (
+                  <AvailableVoteCard key={test.id} test={test} />
+                ))}
+              </div>
+            ) : (
+              <div
+                className="mt-4 rounded-[18px] border border-dashed border-[#3d3d42] bg-[#151517] px-5 py-8 text-center"
+                role="status"
+              >
+                <p className="text-sm font-semibold">
+                  새 투표를 기다리고 있어요.
+                </p>
+                <p className="mt-2 text-xs leading-5 text-[#adadb8]">
+                  활동 지역에 테스트가 시작되면 이곳에서 바로 참여할 수
+                  있습니다.
+                </p>
+              </div>
+            )}
+          </section>
 
           <div className="mt-10 rounded-[18px] border border-[#3d3d42] bg-[#1c1c1f] p-5">
             <p className="text-sm text-[#adadb8]">내 포인트</p>
@@ -254,12 +301,90 @@ export function CustomerHomeClient() {
           </form>
 
           <p className="mt-6 rounded-xl border border-dashed border-[#3d3d42] px-4 py-4 text-center text-sm text-[#adadb8]">
-            매장 공유 링크를 통해 투표에 참여할 수 있어요.
+            매장의 공유 링크나 QR로도 바로 투표에 참여할 수 있어요.
           </p>
         </section>
       </div>
     </main>
   )
+}
+
+function AvailableVoteCard({ test }: { test: AvailableTest }) {
+  const options = [...test.options].sort((a, b) => a.position - b.position)
+  const progress = Math.min(
+    Math.round((test.voteCount / Math.max(test.targetVotes, 1)) * 100),
+    100
+  )
+
+  return (
+    <Link
+      href={`/vote/${test.slug}`}
+      className="group block rounded-[18px] border border-[#3d3d42] bg-[#1c1c1f] p-4 transition-colors hover:border-[#0a85ff] focus-visible:ring-3 focus-visible:ring-[#0a85ff]/40 focus-visible:outline-none"
+    >
+      <article>
+        <div className="flex items-center justify-between gap-3 text-xs">
+          <span className="truncate text-[#adadb8]">
+            {test.categoryName} · {getRegionLabel(test.regionCode)}
+          </span>
+          <span className="shrink-0 rounded-full bg-[#0a85ff]/15 px-2.5 py-1 font-semibold text-[#80c4ff]">
+            +{test.rewardPoints}P
+          </span>
+        </div>
+        <h3 className="mt-3 text-base font-semibold">{test.title}</h3>
+        <p className="mt-1 text-sm text-[#adadb8]">{test.storeName}</p>
+
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          {options.map((option) => (
+            <div
+              key={option.id}
+              className="relative aspect-[4/3] overflow-hidden rounded-xl bg-[#29292e]"
+            >
+              <Image
+                src={option.assetUrl}
+                alt={`포스터 ${option.position === 1 ? "A" : "B"}`}
+                fill
+                unoptimized
+                sizes="(min-width: 620px) 260px, 45vw"
+                className="object-cover"
+              />
+              <span className="absolute top-2 left-2 rounded-full bg-black/75 px-2 py-1 text-[10px] font-semibold">
+                {option.position === 1 ? "A" : "B"}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4 flex items-center justify-between gap-4 text-xs text-[#adadb8]">
+          <span>
+            {test.voteCount}/{test.targetVotes}명 참여
+          </span>
+          <span>{formatVoteDeadline(test.endsAt)}</span>
+        </div>
+        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#303035]">
+          <div
+            className="h-full rounded-full bg-[#0a85ff]"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+        <div className="mt-4 flex items-center justify-end gap-1 text-sm font-semibold text-[#80c4ff]">
+          포스터 고르기
+          <ArrowRightIcon
+            className="size-4 transition-transform group-hover:translate-x-0.5"
+            aria-hidden="true"
+          />
+        </div>
+      </article>
+    </Link>
+  )
+}
+
+function formatVoteDeadline(value: string) {
+  const remaining = Date.parse(value) - Date.now()
+  if (remaining <= 0) return "마감됨"
+
+  const hours = Math.ceil(remaining / (60 * 60 * 1000))
+  if (hours < 24) return `${hours}시간 남음`
+  return `${Math.ceil(hours / 24)}일 남음`
 }
 
 function Message({ children }: { children: React.ReactNode }) {

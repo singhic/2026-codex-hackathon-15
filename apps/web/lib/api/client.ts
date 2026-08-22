@@ -201,6 +201,25 @@ export type VoteContext = {
   }>
 }
 
+export type AvailableTest = {
+  id: UUID
+  slug: string
+  storeName: string
+  categoryName: string
+  regionCode: string
+  title: string
+  question: string
+  rewardPoints: number
+  voteCount: number
+  targetVotes: number
+  endsAt: ISODateTime
+  options: Array<{
+    id: UUID
+    position: 1 | 2
+    assetUrl: string
+  }>
+}
+
 export type StartTestResult = {
   testId: UUID
   status: "scheduled" | "active"

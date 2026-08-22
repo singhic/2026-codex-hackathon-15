@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(25);
+select plan(26);
 
 select has_schema('api', 'api schema exists');
 select has_schema('private', 'private schema exists');
@@ -21,6 +21,12 @@ select has_table('private', 'reward_point_entries', 'reward point ledger exists'
 select has_table('private', 'votes', 'private votes table exists');
 select has_table('private', 'test_detail_views', 'detail view receipts exist');
 select has_function('api', 'start_test', array['uuid', 'uuid'], 'start RPC exists');
+select has_function(
+  'api',
+  'list_available_tests',
+  array[]::text[],
+  'customer discovery RPC exists'
+);
 select has_function(
   'api',
   'submit_vote',
